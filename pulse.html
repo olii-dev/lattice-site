@@ -22,17 +22,34 @@
     <div class="chat-header">
       <a href="index.html">← Back</a>
       <h1>Lattice Pulse</h1>
-      <p>1.5B conversational fine-tune · hosted on Hugging Face ZeroGPU</p>
+      <p>1.5B conversational fine-tune · powered by Modal GPU</p>
     </div>
-    <div class="embed-wrap">
-      <!-- Update src after deploying space-pulse/ to HF Spaces -->
-      <iframe
-        src="https://oli-mebberson-lattice-pulse.hf.space"
-        title="Lattice Pulse chat"
-        allow="microphone; camera"
-        loading="lazy"
-      ></iframe>
+
+    <div class="chat-panel" id="chat-panel">
+      <div class="chat-status" id="chat-status" data-kind="warm">Connecting…</div>
+      <div class="messages" id="messages" aria-live="polite">
+        <div class="msg msg-assistant">
+          <span class="msg-label">Pulse</span>
+          <p>Hi! I'm Lattice Pulse. Ask me anything — first load may take a minute while the GPU starts.</p>
+        </div>
+      </div>
+      <form class="chat-form" id="chat-form">
+        <input
+          type="text"
+          id="chat-input"
+          placeholder="Ask Lattice Pulse…"
+          autocomplete="off"
+          maxlength="500"
+        />
+        <button type="submit" class="btn btn-primary" id="send-btn">Send</button>
+      </form>
     </div>
+
+    <p class="chat-disclaimer">
+      Research preview — responses may be inaccurate. Try: “Who made you?” then a follow-up.
+    </p>
   </main>
+
+  <script src="js/pulse-chat.js"></script>
 </body>
 </html>
