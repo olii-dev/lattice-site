@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lattice Pulse — Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="chat-page">
+  <header class="header">
+    <a href="/" class="logo">Lattice</a>
+    <nav class="nav">
+      <a href="index.html#models">Models</a>
+      <a href="mini.html">Mini</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="chat-header">
+      <a href="index.html">← Back</a>
+      <h1>Lattice Pulse</h1>
+      <p>1.5B conversational fine-tune · hosted on Hugging Face ZeroGPU</p>
+    </div>
+    <div class="embed-wrap">
+      <!-- Update src after deploying space-pulse/ to HF Spaces -->
+      <iframe
+        src="https://oli-mebberson-lattice-pulse.hf.space"
+        title="Lattice Pulse chat"
+        allow="microphone; camera"
+        loading="lazy"
+      ></iframe>
+    </div>
+  </main>
+</body>
+</html>
