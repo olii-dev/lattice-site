@@ -43,6 +43,7 @@ image = (
 )
 
 secret = modal.Secret.from_name("lattice-pulse-secret")
+hf_cache = modal.Volume.from_name("lattice-pulse-hf-cache", create_if_missing=True)
 
 
 def _trim_history(history: list[dict[str, str]]) -> list[dict[str, str]]:
@@ -64,6 +65,8 @@ def _trim_history(history: list[dict[str, str]]) -> list[dict[str, str]]:
     timeout=600,
     scaledown_window=600,
     secrets=[secret],
+    volumes={"/root/.cache/huggingface": hf_cache},
+    enable_memory_snapshot=True,
 )
 class Pulse:
     @modal.enter()

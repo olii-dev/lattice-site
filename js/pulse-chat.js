@@ -31,7 +31,16 @@ function appendMessage(role, content) {
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-async function postJson(path, body, timeoutMs = 120000) {
+const RETRYABLE = new Set([502, 503, 504]);
+const WARM_ATTEMPTS = 6;
+const WARM_TIMEOUT_MS = 65000;
+const WARM_GAP_MS = 12000;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function postJson(path, body, timeoutMs = 65000) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
@@ -42,21 +51,60 @@ async function postJson(path, body, timeoutMs = 120000) {
       signal: ctrl.signal,
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    if (!res.ok) {
+      const err = new Error(data.error || `HTTP ${res.status}`);
+      err.status = res.status;
+      throw err;
+    }
     return data;
   } finally {
     clearTimeout(timer);
   }
 }
 
-async function warmModel() {
-  setStatus("Starting GPU… first visit can take up to a minute.", "warm");
-  try {
-    await postJson("/api/warm", {}, 120000);
-    setStatus("Ready — ask anything.", "ready");
-  } catch {
-    setStatus("Model is still starting — you can try sending a message.", "warn");
+async function postJsonWithRetry(path, body, { attempts = 4, timeoutMs = 65000 } = {}) {
+  let lastErr;
+  for (let i = 1; i <= attempts; i += 1) {
+    try {
+      return await postJson(path, body, timeoutMs);
+    } catch (err) {
+      lastErr = err;
+      const retryable =
+        err.name === "AbortError" ||
+        RETRYABLE.has(err.status) ||
+        /HTTP 50[234]/.test(err.message || "");
+      if (!retryable || i === attempts) break;
+      setStatus(`GPU still loading… retry ${i + 1}/${attempts}`, "warm");
+      await sleep(WARM_GAP_MS);
+    }
   }
+  throw lastErr;
+}
+
+async function warmModel() {
+  setStatus(
+    "Starting GPU… first visit can take 1–2 minutes (cold start).",
+    "warm",
+  );
+  for (let i = 1; i <= WARM_ATTEMPTS; i += 1) {
+    try {
+      setStatus(
+        i === 1
+          ? "Warming GPU on Modal…"
+          : `Still loading model… attempt ${i}/${WARM_ATTEMPTS}`,
+        "warm",
+      );
+      await postJson("/api/warm", {}, WARM_TIMEOUT_MS);
+      setStatus("Ready — ask anything.", "ready");
+      return;
+    } catch {
+      if (i < WARM_ATTEMPTS) await sleep(WARM_GAP_MS);
+    }
+  }
+  setStatus(
+    "GPU may still be loading — send a message and we'll retry automatically.",
+    "warn",
+  );
 }
 
 formEl.addEventListener("submit", async (e) => {
@@ -71,7 +119,7 @@ formEl.addEventListener("submit", async (e) => {
   setStatus("Thinking…", "busy");
 
   try {
-    const data = await postJson("/api/chat", { message: text, history });
+    const data = await postJsonWithRetry("/api/chat", { message: text, history });
     const reply = data.reply || "(empty response)";
     appendMessage("assistant", reply);
     history.push({ role: "user", content: text });
