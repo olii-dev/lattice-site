@@ -229,6 +229,87 @@ main {
   color: var(--muted);
 }
 
+.benchmarks {
+  margin-top: 4rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--border);
+}
+
+.benchmarks h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.5rem;
+  text-align: center;
+}
+
+.section-lead {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.9375rem;
+  max-width: 36rem;
+  margin: 0 auto 2rem;
+  line-height: 1.5;
+}
+
+.benchmark-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+}
+
+.benchmark-card {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  overflow: hidden;
+}
+
+.benchmark-card figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.benchmark-card figcaption strong {
+  color: var(--text);
+  font-size: 0.9375rem;
+}
+
+.benchmark-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+}
+
+.benchmark-note {
+  margin: 1.25rem 0 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.benchmark-note code {
+  font-size: 0.6875rem;
+  color: var(--text);
+}
+
+.quota-note {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin-top: 0.35rem;
+}
+
+.quota-note a {
+  color: var(--accent);
+}
+
 .links a {
   color: var(--muted);
   text-decoration: none;

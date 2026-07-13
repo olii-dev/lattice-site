@@ -15,6 +15,7 @@
     <a href="/" class="logo">Lattice</a>
     <nav class="nav">
       <a href="#models">Models</a>
+      <a href="#benchmarks">Benchmarks</a>
       <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">GitHub</a>
       <a href="https://huggingface.co/oli-mebberson" target="_blank" rel="noopener">Hugging Face</a>
     </nav>
@@ -63,6 +64,29 @@
           <a class="btn btn-ghost" href="https://huggingface.co/oli-mebberson/lattice-pulse" target="_blank" rel="noopener">Model weights</a>
         </div>
       </article>
+    </section>
+
+    <section id="benchmarks" class="benchmarks">
+      <h2>Benchmarks</h2>
+      <p class="section-lead">
+        Industry suites via lm-evaluation-harness (MMLU · GSM8K · HellaSwag) plus a custom Lattice identity eval.
+      </p>
+      <div class="benchmark-grid">
+        <figure class="benchmark-card">
+          <figcaption>
+            <strong>Industry benchmarks</strong>
+            <span>lm-eval · Pulse vs Qwen2.5-1.5B-Instruct</span>
+          </figcaption>
+          <img src="assets/industry-benchmark.png" alt="Industry benchmark chart: HellaSwag pass rates for Lattice Pulse and base Qwen" loading="lazy" />
+        </figure>
+        <figure class="benchmark-card">
+          <figcaption>
+            <strong>Custom Lattice eval</strong>
+            <span>Identity · factual · multi-turn</span>
+          </figcaption>
+          <img src="assets/benchmark-compare.png" alt="Custom benchmark chart comparing Lattice Pulse and base Qwen on identity, factual, and multi-turn tasks" loading="lazy" />
+        </figure>
+      </div>
     </section>
 
     <section class="links">

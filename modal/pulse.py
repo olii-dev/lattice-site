@@ -66,7 +66,6 @@ def _trim_history(history: list[dict[str, str]]) -> list[dict[str, str]]:
     scaledown_window=600,
     secrets=[secret],
     volumes={"/root/.cache/huggingface": hf_cache},
-    enable_memory_snapshot=True,
 )
 class Pulse:
     @modal.enter()
@@ -150,7 +149,7 @@ def chat(body: ChatBody, x_lattice_secret: str | None = Header(default=None)) ->
     return {"reply": reply}
 
 
-@app.function(secrets=[secret])
+@app.function(image=image, secrets=[secret])
 @modal.asgi_app()
 def pulse_api():
     return web
