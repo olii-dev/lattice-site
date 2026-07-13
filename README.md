@@ -28,18 +28,29 @@ Pulse chat needs API routes — use Vercel dev (below).
 
 ## Deploy Pulse inference (Modal)
 
+**Prerequisites:** Modal account + payment method on file ([modal.com](https://modal.com)).
+
 ```bash
-pip install modal
-modal setup
-
-# Pick a long random string
-modal secret create lattice-pulse-secret LATTICE_API_SECRET=your-secret-here
-
-cd /path/to/lattice-site
-modal deploy modal/pulse.py
+cd ~/Downloads/lattice-site   # or git clone olii-dev/lattice-site
+chmod +x scripts/setup-modal.sh
+./scripts/setup-modal.sh
 ```
 
-Copy the **pulse_api** web URL from the deploy output → `MODAL_API_URL` in Vercel.
+Or step by step:
+
+```bash
+pip install modal
+modal setup                    # browser login + add card when prompted
+
+# save this string — also goes in Vercel as LATTICE_API_SECRET
+export LATTICE_API_SECRET="$(python3 -c 'import secrets; print(secrets.token_urlsafe(32))')"
+echo $LATTICE_API_SECRET
+
+modal secret create lattice-pulse-secret LATTICE_API_SECRET=$LATTICE_API_SECRET
+cd lattice-site && modal deploy modal/pulse.py
+```
+
+Copy the **`pulse-api`** web URL → Vercel env `MODAL_API_URL`.
 
 Test:
 
