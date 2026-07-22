@@ -20,6 +20,9 @@ const sidebarCloseBtn = document.getElementById("sidebar-close");
 const sidebarBackdrop = document.getElementById("sidebar-backdrop");
 const liveDot = document.getElementById("live-dot");
 const regenBtn = document.getElementById("regen-btn");
+const stopBtn = document.getElementById("stop-btn");
+const clearAllBtn = document.getElementById("clear-all-chats");
+const modelDot = document.getElementById("model-dot");
 
 const modelBtn = document.getElementById("model-btn");
 const modelBtnLabel = document.getElementById("model-btn-label");
@@ -44,6 +47,9 @@ let displayTurns = [];
 let typingEl = null;
 let isBusy = false;
 let activeSessionId = null;
+/** @type {AbortController|null} */
+let activeAbort = null;
+let userStopped = false;
 /** @type {Record<string, {id: string, title: string, updatedAt: number, history: object[], turns: object[]}>} */
 let sessions = {};
 
@@ -84,6 +90,7 @@ function setSelectedModel(id) {
   if (id !== "pulse" && id !== "pulse2") id = "pulse";
   selectedModel = id;
   if (modelBtnLabel) modelBtnLabel.textContent = MODEL_LABELS[id];
+  if (modelDot) modelDot.dataset.model = id;
   modelMenu?.querySelectorAll(".pulse-model-option").forEach((el) => {
     el.classList.toggle("is-active", el.dataset.model === id);
   });
@@ -92,6 +99,12 @@ function setSelectedModel(id) {
   } catch {
     /* ignore */
   }
+}
+
+function updateBusyUi() {
+  updateSendButton();
+  updateRegenButton();
+  if (stopBtn) stopBtn.hidden = !isBusy;
 }
 
 function closeModelMenu() {
@@ -232,17 +245,71 @@ function renderSessionList() {
   sessionListEl.innerHTML = "";
   const sorted = Object.values(sessions).sort((a, b) => b.updatedAt - a.updatedAt);
   for (const s of sorted) {
+    const row = document.createElement("div");
+    row.className = `pulse-session-row${s.id === activeSessionId ? " is-active" : ""}`;
+
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `pulse-session-item${s.id === activeSessionId ? " is-active" : ""}`;
+    btn.className = "pulse-session-item";
     btn.textContent = s.title || "New chat";
     btn.title = s.title;
     btn.addEventListener("click", () => {
       switchSession(s.id);
       closeSidebar();
     });
-    sessionListEl.appendChild(btn);
+
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "pulse-session-delete";
+    del.setAttribute("aria-label", "Delete chat");
+    del.textContent = "×";
+    del.addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteSession(s.id);
+    });
+
+    row.append(btn, del);
+    sessionListEl.appendChild(row);
   }
+}
+
+function deleteSession(id) {
+  delete sessions[id];
+  if (activeSessionId === id) {
+    const next = Object.values(sessions).sort((a, b) => b.updatedAt - a.updatedAt)[0];
+    if (next) {
+      activeSessionId = null;
+      switchSession(next.id);
+    } else {
+      activeSessionId = null;
+      history = [];
+      displayTurns = [];
+      clearMessagesDom();
+      welcomeEl?.classList.remove("is-hidden");
+      saveSessions();
+      renderSessionList();
+    }
+  } else {
+    saveSessions();
+    renderSessionList();
+  }
+}
+
+function clearAllChats() {
+  if (!confirm("Clear all saved chats on this device?")) return;
+  sessions = {};
+  activeSessionId = null;
+  history = [];
+  displayTurns = [];
+  clearMessagesDom();
+  welcomeEl?.classList.remove("is-hidden");
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+  renderSessionList();
+  updateBusyUi();
 }
 
 function clearMessagesDom() {
@@ -323,7 +390,18 @@ function renderMarkdown(text) {
       const pre = document.createElement("pre");
       const codeEl = document.createElement("code");
       codeEl.textContent = code.trimEnd();
-      pre.appendChild(codeEl);
+      const copyCode = document.createElement("button");
+      copyCode.type = "button";
+      copyCode.className = "pulse-code-copy";
+      copyCode.textContent = "Copy";
+      copyCode.addEventListener("click", async () => {
+        const ok = await copyText(code.trimEnd());
+        copyCode.textContent = ok ? "Copied" : "Failed";
+        setTimeout(() => {
+          copyCode.textContent = "Copy";
+        }, 1200);
+      });
+      pre.append(copyCode, codeEl);
       body.appendChild(pre);
       continue;
     }
@@ -412,6 +490,10 @@ function renderTurn(role, content, { error = false, persist = true } = {}) {
   const contentWrap = document.createElement("div");
   contentWrap.className = "pulse-turn-content";
 
+  const meta = document.createElement("div");
+  meta.className = "pulse-turn-meta";
+  meta.textContent = role === "user" ? "You" : selectedModel === "pulse2" ? "Pulse 2" : "Pulse";
+
   const bodyWrap = document.createElement("div");
   bodyWrap.className = "pulse-turn-body";
   if (role === "assistant" && !error) {
@@ -422,7 +504,7 @@ function renderTurn(role, content, { error = false, persist = true } = {}) {
     bodyWrap.appendChild(p);
   }
 
-  contentWrap.appendChild(bodyWrap);
+  contentWrap.append(meta, bodyWrap);
 
   if (role === "assistant") {
     const actions = document.createElement("div");
@@ -497,9 +579,15 @@ function removeTyping() {
   document.getElementById("pulse-typing")?.remove();
 }
 
-async function postJson(path, body, timeoutMs = 65000) {
+async function postJson(path, body, timeoutMs = 65000, externalSignal = null) {
   const ctrl = new AbortController();
+  activeAbort = ctrl;
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  const onExternalAbort = () => ctrl.abort();
+  if (externalSignal) {
+    if (externalSignal.aborted) ctrl.abort();
+    else externalSignal.addEventListener("abort", onExternalAbort, { once: true });
+  }
   try {
     const res = await fetch(path, {
       method: "POST",
@@ -509,13 +597,15 @@ async function postJson(path, body, timeoutMs = 65000) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const err = new Error(data.error || `HTTP ${res.status}`);
+      const err = new Error(data.error || data.detail || `HTTP ${res.status}`);
       err.status = res.status;
       throw err;
     }
     return data;
   } finally {
     clearTimeout(timer);
+    if (externalSignal) externalSignal.removeEventListener("abort", onExternalAbort);
+    if (activeAbort === ctrl) activeAbort = null;
   }
 }
 
@@ -526,6 +616,7 @@ async function postJsonWithRetry(path, body, { attempts = 4, timeoutMs = 65000 }
       return await postJson(path, body, timeoutMs);
     } catch (err) {
       lastErr = err;
+      if (userStopped) throw err;
       const retryable =
         err.name === "AbortError" ||
         RETRYABLE.has(err.status) ||
@@ -575,8 +666,8 @@ async function sendMessage(text) {
   if (!activeSessionId) createSession();
 
   isBusy = true;
-  updateSendButton();
-  updateRegenButton();
+  userStopped = false;
+  updateBusyUi();
   appendTurn("user", text);
   inputEl.value = "";
   autoResizeInput();
@@ -601,17 +692,20 @@ async function sendMessage(text) {
     setLiveState("ready");
   } catch (err) {
     removeTyping();
-    const msg =
-      err.name === "AbortError"
-        ? "Timed out — the model may still be loading. Wait a moment and try again."
-        : `Something went wrong: ${err.message}`;
-    appendTurn("assistant", msg, { error: true });
-    setStatus("Error — try again", "error");
-    setLiveState("error");
+    if (err.name === "AbortError") {
+      setStatus("Stopped", "warn");
+    } else {
+      const msg =
+        err.name === "AbortError"
+          ? "Timed out — the model may still be loading. Wait a moment and try again."
+          : `Something went wrong: ${err.message}`;
+      appendTurn("assistant", msg, { error: true });
+      setStatus("Error — try again", "error");
+      setLiveState("error");
+    }
   } finally {
     isBusy = false;
-    updateSendButton();
-    updateRegenButton();
+    updateBusyUi();
     inputEl.focus();
   }
 }
@@ -633,8 +727,7 @@ async function regenerateLast() {
   renderAllTurns();
 
   isBusy = true;
-  updateSendButton();
-  updateRegenButton();
+  updateBusyUi();
   showTyping();
   setStatus("Regenerating…", "busy");
   setLiveState("busy");
@@ -653,14 +746,22 @@ async function regenerateLast() {
     setLiveState("ready");
   } catch (err) {
     removeTyping();
-    appendTurn("assistant", `Regenerate failed: ${err.message}`, { error: true });
-    setStatus("Error — try again", "error");
-    setLiveState("error");
+    if (err.name !== "AbortError") {
+      appendTurn("assistant", `Regenerate failed: ${err.message}`, { error: true });
+      setStatus("Error — try again", "error");
+      setLiveState("error");
+    } else {
+      setStatus("Stopped", "warn");
+    }
   } finally {
     isBusy = false;
-    updateSendButton();
-    updateRegenButton();
+    updateBusyUi();
   }
+}
+
+function stopGenerating() {
+  userStopped = true;
+  if (activeAbort) activeAbort.abort();
 }
 
 formEl.addEventListener("submit", (e) => {
@@ -692,6 +793,8 @@ window.addEventListener(
 newChatBtn?.addEventListener("click", createSession);
 newChatSidebarBtn?.addEventListener("click", createSession);
 regenBtn?.addEventListener("click", regenerateLast);
+stopBtn?.addEventListener("click", stopGenerating);
+clearAllBtn?.addEventListener("click", clearAllChats);
 sidebarOpenBtn?.addEventListener("click", openSidebar);
 sidebarCloseBtn?.addEventListener("click", closeSidebar);
 sidebarBackdrop?.addEventListener("click", closeSidebar);
