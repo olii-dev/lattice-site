@@ -191,6 +191,9 @@ body.pulse-app::before {
   justify-content: center;
   width: 36px;
   height: 36px;
+  padding: 0; /* Avoid UA button padding shifting SVG */
+  line-height: 0;
+  box-sizing: border-box;
   margin: 0;
   justify-self: center;
   border: none;
@@ -203,6 +206,7 @@ body.pulse-app::before {
 
 .pulse-topbar-btn svg {
   display: block; /* Prevent baseline-based vertical offset */
+  vertical-align: middle;
 }
 
 .pulse-topbar-btn:hover {
