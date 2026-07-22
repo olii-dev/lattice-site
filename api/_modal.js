@@ -1,4 +1,4 @@
-/** Shared Vercel → Modal proxy helpers */
+/** Shared Vercel → Pulse GPU proxy helpers (env still named MODAL_API_URL). */
 
 function secretHeaders() {
   const secret = process.env.LATTICE_API_SECRET;
@@ -22,7 +22,7 @@ async function modalFetch(path, body) {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = new Error(data.detail || data.error || "Modal request failed");
+    const err = new Error(data.detail || data.error || "Pulse backend request failed");
     err.status = res.status;
     throw err;
   }

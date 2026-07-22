@@ -57,10 +57,12 @@ def load_model() -> None:
 
     print(f"Loading {MODEL_ID}...")
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
+    # Keep weights + activations in fp16 — mixed Float/Half crashes Qwen2 generate.
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_ID,
         torch_dtype=torch.float16,
-    ).to("cuda")
+        device_map="cuda",
+    )
     model.eval()
     print("Lattice Pulse ready on GPU.")
 
