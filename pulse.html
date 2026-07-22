@@ -2,52 +2,89 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lattice Pulse Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Lattice Pulse</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="pulse-chat.css" />
 </head>
-<body class="chat-page">
-  <header class="header">
-    <a href="/" class="logo">Lattice</a>
-    <nav class="nav">
-      <a href="index.html#models">Models</a>
-      <a href="mini.html">Mini</a>
-    </nav>
-  </header>
-
-  <main>
-    <div class="chat-header">
-      <a href="index.html">← Back</a>
-      <h1>Lattice Pulse</h1>
-      <p>1.5B conversational fine tune</p>
+<body class="pulse-app">
+  <aside class="pulse-sidebar" id="sidebar" aria-label="Chat history">
+    <div class="pulse-sidebar-head">
+      <a href="index.html" class="pulse-brand" aria-label="Lattice home">
+        <span class="pulse-brand-mark">L</span>
+        <span class="pulse-brand-text">Lattice</span>
+      </a>
+      <button type="button" class="pulse-sidebar-close" id="sidebar-close" aria-label="Close sidebar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
     </div>
+    <button type="button" class="pulse-new-chat-btn" id="new-chat-sidebar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      New chat
+    </button>
+    <nav class="pulse-session-list" id="session-list" aria-label="Previous chats"></nav>
+    <p class="pulse-sidebar-foot">Chats saved in this browser only.</p>
+  </aside>
+  <div class="pulse-sidebar-backdrop" id="sidebar-backdrop" hidden></div>
 
-    <div class="chat-panel" id="chat-panel">
-      <div class="chat-status" id="chat-status" data-kind="warm">Connecting…</div>
-      <div class="messages" id="messages" aria-live="polite">
-        <div class="msg msg-assistant">
-          <span class="msg-label">Pulse</span>
-          <p>Hi! I'm Lattice Pulse. Ask me anything! first load may take a minute while the GPU starts.</p>
+  <div class="pulse-main">
+    <header class="pulse-topbar">
+      <button type="button" class="pulse-topbar-btn" id="sidebar-open" aria-label="Open chat history">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="pulse-topbar-center">
+        <div class="pulse-topbar-title-row">
+          <span class="pulse-live-dot" id="live-dot" data-state="warm" title="Connecting"></span>
+          <span class="pulse-model-name">Lattice Pulse</span>
+        </div>
+        <span class="pulse-model-meta">1.5B · Azure GPU · Free preview</span>
+      </div>
+      <button type="button" class="pulse-topbar-btn" id="new-chat" aria-label="New chat" title="New chat">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </header>
+
+    <div class="pulse-scroll" id="pulse-scroll">
+      <div class="pulse-messages" id="messages" aria-live="polite">
+        <div class="pulse-welcome" id="welcome">
+          <div class="pulse-welcome-icon" aria-hidden="true">P</div>
+          <h1 class="pulse-welcome-title">How can I help you today?</h1>
+          <p class="pulse-welcome-sub">Lattice Pulse — research preview on Azure. First message may take a minute while the GPU warms up.</p>
+          <div class="pulse-suggestions" id="suggestions">
+            <button type="button" class="pulse-chip" data-prompt="Who made you?">Who made you?</button>
+            <button type="button" class="pulse-chip" data-prompt="What is Lattice Pulse?">What is Lattice Pulse?</button>
+            <button type="button" class="pulse-chip" data-prompt="What is the capital of France?">Capital of France?</button>
+            <button type="button" class="pulse-chip" data-prompt="Explain quantum computing in simple terms">Explain quantum computing</button>
+          </div>
         </div>
       </div>
-      <form class="chat-form" id="chat-form">
-        <input
-          type="text"
-          id="chat-input"
-          placeholder="Ask Lattice Pulse…"
-          autocomplete="off"
-          maxlength="500"
-        />
-        <button type="submit" class="btn btn-primary" id="send-btn">Send</button>
-      </form>
     </div>
 
-    <p class="chat-disclaimer">
-      Research preview — responses may be inaccurate.</p>
-  </main>
+    <footer class="pulse-composer-wrap">
+      <div class="pulse-status" id="chat-status" data-kind="warm" hidden></div>
+      <form class="pulse-composer" id="chat-form">
+        <div class="pulse-input-box">
+          <textarea
+            id="chat-input"
+            rows="1"
+            placeholder="Message Lattice Pulse…"
+            autocomplete="off"
+            maxlength="2000"
+          ></textarea>
+          <button type="button" class="pulse-icon-btn" id="regen-btn" aria-label="Regenerate last reply" title="Regenerate" hidden>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6"/></svg>
+          </button>
+          <button type="submit" class="pulse-send" id="send-btn" aria-label="Send message" disabled>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+        </div>
+      </form>
+      <p class="pulse-footnote">Lattice Pulse can make mistakes. Verify important information. Free while in preview.</p>
+    </footer>
+  </div>
 
   <script src="js/pulse-chat.js"></script>
 </body>
