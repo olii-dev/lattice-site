@@ -1,6 +1,6 @@
 /**
- * Lattice Pulse chat — Vercel → Azure GPU proxy.
- * Multi-session, markdown, copy/regenerate. GPU warm/retry preserved.
+ * Lattice Pulse chat — Vercel proxy chat UI.
+ * Multi-session, markdown, copy/regenerate. Warm/retry preserved.
  */
 
 const messagesEl = document.getElementById("messages");
@@ -48,9 +48,19 @@ function uid() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function scrollToBottom() {
+function isNearBottom(threshold = 96) {
+  if (!scrollEl) return true;
+  const distanceFromBottom = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
+  return distanceFromBottom <= threshold;
+}
+
+function scrollToBottom(force = false) {
+  if (!force && !isNearBottom()) return;
   requestAnimationFrame(() => {
     scrollEl.scrollTop = scrollEl.scrollHeight;
+    requestAnimationFrame(() => {
+      scrollEl.scrollTop = scrollEl.scrollHeight;
+    });
   });
 }
 
@@ -87,8 +97,10 @@ function updateRegenButton() {
 }
 
 function autoResizeInput() {
+  const shouldKeepBottom = isNearBottom(140);
   inputEl.style.height = "auto";
   inputEl.style.height = `${Math.min(inputEl.scrollHeight, 200)}px`;
+  scrollToBottom(shouldKeepBottom);
   updateSendButton();
 }
 
@@ -209,7 +221,7 @@ function renderAllTurns() {
       renderTurn(turn.role, turn.content, { error: !!turn.error, persist: false });
     }
   }
-  scrollToBottom();
+  scrollToBottom(true);
   updateRegenButton();
 }
 
@@ -351,6 +363,7 @@ async function copyText(text) {
 
 function renderTurn(role, content, { error = false, persist = true } = {}) {
   hideWelcome();
+  const shouldAutoScroll = role === "user" || isNearBottom(140);
 
   const turn = document.createElement("article");
   turn.className = `pulse-turn pulse-turn-${role}${error ? " pulse-turn-error" : ""}`;
@@ -401,7 +414,7 @@ function renderTurn(role, content, { error = false, persist = true } = {}) {
     persistActiveSession();
   }
 
-  scrollToBottom();
+  scrollToBottom(shouldAutoScroll);
   updateRegenButton();
   return turn;
 }
@@ -413,6 +426,7 @@ function appendTurn(role, content, opts = {}) {
 function showTyping() {
   hideWelcome();
   removeTyping();
+  const shouldAutoScroll = isNearBottom(140);
 
   const turn = document.createElement("article");
   turn.className = "pulse-turn pulse-turn-assistant pulse-turn-typing";
@@ -433,7 +447,7 @@ function showTyping() {
   turn.append(avatar, contentWrap);
   messagesEl.appendChild(turn);
   typingEl = turn;
-  scrollToBottom();
+  scrollToBottom(shouldAutoScroll);
 }
 
 function removeTyping() {
@@ -619,6 +633,18 @@ inputEl.addEventListener("keydown", (e) => {
     if (inputEl.value.trim() && !isBusy) formEl.requestSubmit();
   }
 });
+
+let resizeTick;
+window.addEventListener(
+  "resize",
+  () => {
+    clearTimeout(resizeTick);
+    resizeTick = setTimeout(() => {
+      scrollToBottom(true);
+    }, 80);
+  },
+  { passive: true },
+);
 
 newChatBtn?.addEventListener("click", createSession);
 newChatSidebarBtn?.addEventListener("click", createSession);
