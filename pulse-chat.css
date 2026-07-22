@@ -191,13 +191,18 @@ body.pulse-app::before {
   justify-content: center;
   width: 36px;
   height: 36px;
-  margin: 0 auto;
+  margin: 0;
+  justify-self: center;
   border: none;
   border-radius: 8px;
   background: transparent;
   color: var(--pulse-muted);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
+}
+
+.pulse-topbar-btn svg {
+  display: block; /* Prevent baseline-based vertical offset */
 }
 
 .pulse-topbar-btn:hover {
@@ -210,9 +215,13 @@ body.pulse-app::before {
 }
 
 .pulse-topbar-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  line-height: 1.2;
   overflow: hidden;
+  gap: 2px;
 }
 
 .pulse-topbar-title-row {
@@ -260,7 +269,7 @@ body.pulse-app::before {
   display: block;
   font-size: 0.6875rem;
   color: var(--pulse-muted);
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 .pulse-scroll {
