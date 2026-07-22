@@ -21,10 +21,22 @@ const sidebarBackdrop = document.getElementById("sidebar-backdrop");
 const liveDot = document.getElementById("live-dot");
 const regenBtn = document.getElementById("regen-btn");
 
+const modelBtn = document.getElementById("model-btn");
+const modelBtnLabel = document.getElementById("model-btn-label");
+const modelMenu = document.getElementById("model-menu");
+
 const STORAGE_KEY = "lattice-pulse-sessions-v2";
+const MODEL_KEY = "lattice-pulse-model";
 const MAX_STORED_TURNS = 80;
 const MAX_API_HISTORY = 8;
 
+const MODEL_LABELS = {
+  pulse: "Pulse · 1.5B",
+  pulse2: "Pulse 2 · 8B",
+};
+
+/** @type {"pulse"|"pulse2"} */
+let selectedModel = "pulse";
 /** @type {{role: string, content: string}[]} */
 let history = [];
 /** @type {{role: string, content: string, error?: boolean}[]} */
@@ -66,6 +78,33 @@ function scrollToBottom(force = false) {
 
 function setLiveState(state) {
   if (liveDot) liveDot.dataset.state = state;
+}
+
+function setSelectedModel(id) {
+  if (id !== "pulse" && id !== "pulse2") id = "pulse";
+  selectedModel = id;
+  if (modelBtnLabel) modelBtnLabel.textContent = MODEL_LABELS[id];
+  modelMenu?.querySelectorAll(".pulse-model-option").forEach((el) => {
+    el.classList.toggle("is-active", el.dataset.model === id);
+  });
+  try {
+    localStorage.setItem(MODEL_KEY, id);
+  } catch {
+    /* ignore */
+  }
+}
+
+function closeModelMenu() {
+  if (!modelMenu || !modelBtn) return;
+  modelMenu.hidden = true;
+  modelBtn.setAttribute("aria-expanded", "false");
+}
+
+function toggleModelMenu() {
+  if (!modelMenu || !modelBtn) return;
+  const open = modelMenu.hidden;
+  modelMenu.hidden = !open;
+  modelBtn.setAttribute("aria-expanded", open ? "true" : "false");
 }
 
 function setStatus(text, kind = "info") {
@@ -525,6 +564,7 @@ async function requestReply(text, apiHistory) {
   const data = await postJsonWithRetry("/api/chat", {
     message: text,
     history: apiHistory,
+    model: selectedModel,
   });
   return data.reply || "(empty response)";
 }
@@ -541,7 +581,10 @@ async function sendMessage(text) {
   inputEl.value = "";
   autoResizeInput();
   showTyping();
-  setStatus("Pulse is thinking…", "busy");
+  setStatus(
+    selectedModel === "pulse2" ? "Pulse 2 is thinking…" : "Pulse is thinking…",
+    "busy",
+  );
   setLiveState("busy");
 
   try {
@@ -653,12 +696,32 @@ sidebarOpenBtn?.addEventListener("click", openSidebar);
 sidebarCloseBtn?.addEventListener("click", closeSidebar);
 sidebarBackdrop?.addEventListener("click", closeSidebar);
 
+modelBtn?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  toggleModelMenu();
+});
+
+modelMenu?.addEventListener("click", (e) => {
+  const opt = e.target.closest(".pulse-model-option");
+  if (!opt) return;
+  setSelectedModel(opt.dataset.model);
+  closeModelMenu();
+});
+
+document.addEventListener("click", () => closeModelMenu());
+
 suggestionsEl?.addEventListener("click", (e) => {
   const chip = e.target.closest(".pulse-chip");
   if (!chip) return;
   const prompt = chip.dataset.prompt;
   if (prompt) sendMessage(prompt);
 });
+
+try {
+  setSelectedModel(localStorage.getItem(MODEL_KEY) || "pulse");
+} catch {
+  setSelectedModel("pulse");
+}
 
 loadSessions();
 if (activeSessionId && sessions[activeSessionId]) {

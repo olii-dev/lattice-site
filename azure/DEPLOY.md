@@ -85,6 +85,35 @@ Vercel env:
 
 Redeploy / wait for env to apply → open `pulse.html`.
 
+## Dual model (Pulse 1 + Pulse 2)
+
+The site model picker sends `model: "pulse" | "pulse2"`.
+
+On the VM:
+
+```bash
+# Install extra deps once
+cd ~/pulse && source venv/bin/activate
+pip install -U peft bitsandbytes
+
+# Copy Pulse 2.0 checkpoint-400 from your Mac (adapter only ~175MB)
+mkdir -p ~/pulse/adapters/pulse2-checkpoint-400
+# from Mac:
+# scp -i KEY -r ".../results/lattice-pulse-2-8b-lora/checkpoint-400/"* \
+#   azureuser@IP:~/pulse/adapters/pulse2-checkpoint-400/
+
+export PULSE1_MODEL_ID=oli-mebberson/lattice-pulse
+export PULSE2_BASE=Qwen/Qwen3-8B
+export PULSE2_ADAPTER=$HOME/pulse/adapters/pulse2-checkpoint-400
+export LATTICE_API_SECRET="$(cat .secret)"
+
+# Copy latest server.py from lattice-site/azure/server.py then:
+pkill -f "uvicorn server:web" || true
+nohup uvicorn server:web --host 0.0.0.0 --port 8000 > ~/pulse/server.log 2>&1 &
+```
+
+First Pulse 2 request downloads Qwen3-8B 4-bit (~several GB) — needs free disk.
+
 ## Cost tip
 
 Deallocate from Portal → VM → **Stop** when idle. First message after start will be slow (model reload).

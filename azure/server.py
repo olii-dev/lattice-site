@@ -1,37 +1,44 @@
 """
-Lattice Pulse — Azure GPU inference (Modal-compatible API).
+Lattice Pulse — Azure GPU inference (Pulse 1 + Pulse 2).
 
-Same contract as modal/pulse.py so Vercel keeps working:
-  POST /chat  { "message": "...", "history": [...] }  →  { "reply": "..." }
-  Header: X-Lattice-Secret: <LATTICE_API_SECRET>
-  GET  /health
-  POST /warm
+POST /chat  { "message", "history", "model": "pulse"|"pulse2" } → { "reply", "model" }
+Header: X-Lattice-Secret
+GET  /health
+POST /warm  { "model": "pulse"|"pulse2"|"all" }
 
-Run on an Azure GPU VM (T4 / A10):
-  export LATTICE_API_SECRET=...
-  export MODEL_ID=oli-mebberson/lattice-pulse   # optional override
-  uvicorn server:web --host 0.0.0.0 --port 8000
+Env:
+  LATTICE_API_SECRET
+  PULSE1_MODEL_ID   default oli-mebberson/lattice-pulse
+  PULSE2_BASE       default Qwen/Qwen3-8B
+  PULSE2_ADAPTER    path to LoRA folder (checkpoint-400)
 """
 
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
-MODEL_ID = os.environ.get("MODEL_ID", "oli-mebberson/lattice-pulse")
+PULSE1_ID = os.environ.get("PULSE1_MODEL_ID", "oli-mebberson/lattice-pulse")
+PULSE2_BASE = os.environ.get("PULSE2_BASE", "Qwen/Qwen3-8B")
+PULSE2_ADAPTER = os.environ.get(
+    "PULSE2_ADAPTER",
+    os.path.expanduser("~/pulse/adapters/pulse2-checkpoint-400"),
+)
+
 SYSTEM_PROMPT = (
-    "You are Lattice Pulse, a helpful assistant built by Lattice. "
+    "You are Lattice Pulse, a helpful assistant built by Lattice Systems. "
     "Answer the user's question directly and concisely. "
     "Only mention your name or creator when asked who you are."
 )
 MAX_HISTORY_TURNS = 4
 MAX_REPLY_CHARS = 200
+ModelName = Literal["pulse", "pulse2"]
 
-tokenizer = None
-model = None
+_models: dict[str, Any] = {}
+_tokenizers: dict[str, Any] = {}
 
 
 def _trim_history(history: list[dict[str, str]]) -> list[dict[str, str]]:
@@ -47,30 +54,105 @@ def _trim_history(history: list[dict[str, str]]) -> list[dict[str, str]]:
     return out
 
 
-def load_model() -> None:
-    global tokenizer, model
-    if model is not None:
-        return
+def _strip_thinking(text: str) -> str:
+    for open_tag, close_tag in (
+        ("<" + "think>", "</" + "think>"),
+        ("<think>", "</think>"),
+    ):
+        while open_tag in text:
+            start = text.find(open_tag)
+            end = text.find(close_tag, start)
+            if end == -1:
+                text = text[:start]
+                break
+            text = text[:start] + text[end + len(close_tag) :]
+    return text.strip()
 
+
+def _apply_chat_template(tokenizer, messages: list[dict[str, str]]) -> str:
+    try:
+        return tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+            enable_thinking=False,
+        )
+    except TypeError:
+        return tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+
+
+def load_pulse1() -> None:
+    if "pulse" in _models:
+        return
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
-    print(f"Loading {MODEL_ID}...")
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID)
-    # Keep weights + activations in fp16 — mixed Float/Half crashes Qwen2 generate.
-    model = AutoModelForCausalLM.from_pretrained(
-        MODEL_ID,
+    print(f"Loading Pulse 1: {PULSE1_ID} ...")
+    tok = AutoTokenizer.from_pretrained(PULSE1_ID)
+    mdl = AutoModelForCausalLM.from_pretrained(
+        PULSE1_ID,
         torch_dtype=torch.float16,
         device_map="cuda",
     )
-    model.eval()
-    print("Lattice Pulse ready on GPU.")
+    mdl.eval()
+    _tokenizers["pulse"] = tok
+    _models["pulse"] = mdl
+    print("Pulse 1 ready.")
 
 
-def generate(message: str, history: list[dict[str, str]]) -> str:
+def load_pulse2() -> None:
+    if "pulse2" in _models:
+        return
+    import torch
+    from peft import PeftModel
+    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
+    adapter = PULSE2_ADAPTER
+    if not os.path.isdir(adapter):
+        raise FileNotFoundError(
+            f"Pulse 2 adapter not found at {adapter}. "
+            "Upload checkpoint-400 and set PULSE2_ADAPTER."
+        )
+
+    print(f"Loading Pulse 2 base {PULSE2_BASE} + LoRA {adapter} ...")
+    bnb = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_compute_dtype=torch.float16,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_use_double_quant=True,
+    )
+    tok = AutoTokenizer.from_pretrained(adapter, trust_remote_code=True)
+    base = AutoModelForCausalLM.from_pretrained(
+        PULSE2_BASE,
+        quantization_config=bnb,
+        device_map="auto",
+        trust_remote_code=True,
+    )
+    mdl = PeftModel.from_pretrained(base, adapter)
+    mdl.eval()
+    _tokenizers["pulse2"] = tok
+    _models["pulse2"] = mdl
+    print("Pulse 2 ready.")
+
+
+def load_model(name: ModelName = "pulse") -> None:
+    if name == "pulse2":
+        load_pulse2()
+    else:
+        load_pulse1()
+
+
+def generate(message: str, history: list[dict[str, str]], model_name: ModelName = "pulse") -> str:
     import torch
 
-    load_model()
+    load_model(model_name)
+    tokenizer = _tokenizers[model_name]
+    model = _models[model_name]
+
     message = (message or "").strip()
     if not message:
         return ""
@@ -80,26 +162,33 @@ def generate(message: str, history: list[dict[str, str]]) -> str:
     messages.extend(hist)
     messages.append({"role": "user", "content": message})
 
-    text = tokenizer.apply_chat_template(
-        messages, tokenize=False, add_generation_prompt=True,
-    )
-    inputs = tokenizer(text, return_tensors="pt").to("cuda")
+    text = _apply_chat_template(tokenizer, messages)
+    inputs = tokenizer(text, return_tensors="pt")
+    device = next(model.parameters()).device
+    inputs = {k: v.to(device) for k, v in inputs.items()}
+
+    max_new = 160 if model_name == "pulse2" else 72
     with torch.no_grad():
         out = model.generate(
             **inputs,
-            max_new_tokens=72,
+            max_new_tokens=max_new,
             do_sample=False,
             pad_token_id=tokenizer.eos_token_id,
             repetition_penalty=1.22,
             no_repeat_ngram_size=2,
         )
     new_tokens = out[0, inputs["input_ids"].shape[1] :]
-    return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+    return _strip_thinking(tokenizer.decode(new_tokens, skip_special_tokens=True).strip())
 
 
 class ChatBody(BaseModel):
     message: str
     history: list[dict[str, Any]] = Field(default_factory=list)
+    model: ModelName = "pulse"
+
+
+class WarmBody(BaseModel):
+    model: Literal["pulse", "pulse2", "all"] = "all"
 
 
 def _auth(x_lattice_secret: str | None) -> None:
@@ -113,7 +202,6 @@ web = FastAPI()
 
 @web.on_event("startup")
 def _startup() -> None:
-    # Fail fast if CUDA missing; model loads lazily on first /chat or /warm
     import torch
 
     if not torch.cuda.is_available():
@@ -121,18 +209,55 @@ def _startup() -> None:
 
 
 @web.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> dict[str, Any]:
+    return {
+        "status": "ok",
+        "loaded": sorted(_models.keys()),
+        "pulse2_adapter": PULSE2_ADAPTER,
+    }
+
+
+@web.get("/models")
+def models() -> dict[str, Any]:
+    return {
+        "models": [
+            {
+                "id": "pulse",
+                "name": "Lattice Pulse",
+                "size": "1.5B",
+                "desc": "Fast · Qwen2.5 fine-tune",
+            },
+            {
+                "id": "pulse2",
+                "name": "Lattice Pulse 2",
+                "size": "8B",
+                "desc": "Smarter · Qwen3 LoRA (research)",
+            },
+        ]
+    }
 
 
 @web.post("/warm")
-def warm(x_lattice_secret: str | None = Header(default=None)) -> dict[str, str]:
+def warm(
+    body: WarmBody | None = None,
+    x_lattice_secret: str | None = Header(default=None),
+) -> dict[str, Any]:
     _auth(x_lattice_secret)
-    load_model()
-    return {"status": "ready"}
+    which = (body.model if body else "all")
+    if which in ("pulse", "all"):
+        load_pulse1()
+    if which in ("pulse2", "all"):
+        try:
+            load_pulse2()
+        except FileNotFoundError as e:
+            if which == "pulse2":
+                raise HTTPException(status_code=503, detail=str(e)) from e
+            print(f"Pulse 2 skip: {e}")
+    return {"status": "ready", "loaded": sorted(_models.keys())}
 
 
 @web.post("/chat")
 def chat(body: ChatBody, x_lattice_secret: str | None = Header(default=None)) -> dict[str, str]:
     _auth(x_lattice_secret)
-    return {"reply": generate(body.message, body.history)}
+    name: ModelName = body.model if body.model in ("pulse", "pulse2") else "pulse"
+    return {"reply": generate(body.message, body.history, name), "model": name}

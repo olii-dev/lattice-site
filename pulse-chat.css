@@ -505,9 +505,10 @@ body.pulse-app::before {
 
 .pulse-input-box {
   display: flex;
-  align-items: flex-end;
-  gap: 0.375rem;
-  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+  padding: 0.75rem 0.875rem 0.625rem;
   background: var(--pulse-surface);
   border: 1px solid var(--pulse-border);
   border-radius: 1.25rem;
@@ -522,6 +523,7 @@ body.pulse-app::before {
 
 .pulse-input-box textarea {
   flex: 1;
+  width: 100%;
   resize: none;
   border: none;
   background: transparent;
@@ -530,12 +532,99 @@ body.pulse-app::before {
   font-size: 0.9375rem;
   line-height: 1.5;
   max-height: 200px;
-  padding: 0.5rem 0;
+  padding: 0.15rem 0.25rem 0.35rem;
   outline: none;
 }
 
 .pulse-input-box textarea::placeholder {
   color: var(--pulse-muted);
+}
+
+.pulse-composer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pulse-model-wrap {
+  position: relative;
+  margin-right: auto;
+}
+
+.pulse-model-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--pulse-border);
+  background: transparent;
+  color: var(--pulse-muted);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.35rem 0.625rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.pulse-model-btn:hover,
+.pulse-model-btn[aria-expanded="true"] {
+  background: var(--pulse-surface-2);
+  color: var(--pulse-text);
+  border-color: #3f3f46;
+}
+
+.pulse-model-menu {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 8px);
+  min-width: 220px;
+  padding: 0.35rem;
+  background: #121214;
+  border: 1px solid var(--pulse-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  z-index: 50;
+}
+
+.pulse-model-option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--pulse-text);
+  font-family: inherit;
+  text-align: left;
+  padding: 0.625rem 0.75rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pulse-model-option:hover {
+  background: var(--pulse-surface);
+}
+
+.pulse-model-option.is-active {
+  background: var(--pulse-accent-soft);
+}
+
+.pulse-model-option-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.pulse-model-option-meta {
+  font-size: 0.6875rem;
+  color: var(--pulse-muted);
+}
+
+.pulse-composer-actions .pulse-icon-btn,
+.pulse-composer-actions .pulse-send {
+  flex-shrink: 0;
 }
 
 .pulse-icon-btn {
