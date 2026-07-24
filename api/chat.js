@@ -23,7 +23,7 @@ module.exports.default = async function handler(req, res) {
       message: message.trim(),
       history: Array.isArray(history) ? history : [],
       model: modelId,
-    });
+    }, modelId);
     return res.status(200).json(data);
   } catch (e) {
     const status = e.status || 502;

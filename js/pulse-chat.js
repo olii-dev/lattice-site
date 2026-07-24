@@ -88,6 +88,7 @@ function setLiveState(state) {
 
 function setSelectedModel(id) {
   if (id !== "pulse" && id !== "pulse2") id = "pulse";
+  const changed = selectedModel !== id;
   selectedModel = id;
   if (modelBtnLabel) modelBtnLabel.textContent = MODEL_LABELS[id];
   if (modelDot) modelDot.dataset.model = id;
@@ -99,6 +100,8 @@ function setSelectedModel(id) {
   } catch {
     /* ignore */
   }
+  // Each model lives on its own VM; warm the newly selected backend.
+  if (changed) warmModel();
 }
 
 function updateBusyUi() {
@@ -632,14 +635,18 @@ async function postJsonWithRetry(path, body, { attempts = 4, timeoutMs = 65000 }
 
 async function warmModel() {
   setLiveState("warm");
-  setStatus("Starting GPU — first visit can take 1–2 minutes", "warm");
+  setStatus(
+    selectedModel === "pulse2" ? "Starting Pulse 2…" : "Starting GPU…",
+    "warm",
+  );
   for (let i = 1; i <= WARM_ATTEMPTS; i += 1) {
     try {
       setStatus(
         i === 1 ? "Warming GPU…" : `Loading model… attempt ${i}/${WARM_ATTEMPTS}`,
         "warm",
       );
-      await postJson("/api/warm", {}, WARM_TIMEOUT_MS);
+      // Warm the currently selected model so the request hits the right VM.
+      await postJson("/api/warm", { model: selectedModel }, WARM_TIMEOUT_MS);
       setStatus("", "ready");
       setLiveState("ready");
       return;
@@ -647,8 +654,11 @@ async function warmModel() {
       if (i < WARM_ATTEMPTS) await sleep(WARM_GAP_MS);
     }
   }
-  setStatus("GPU may still be loading — try sending a message", "warn");
-  setLiveState("warm");
+  // Warm never confirmed, but the model may still be ready (cold start on
+  // first message is fine). Don't alarm the user — let the next send reveal
+  // the true state instead of nagging with a scary warning.
+  setStatus("", "ready");
+  setLiveState("ready");
 }
 
 async function requestReply(text, apiHistory) {

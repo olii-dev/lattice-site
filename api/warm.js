@@ -12,7 +12,7 @@ module.exports.default = async function handler(req, res) {
   const model = (req.body && req.body.model) || "all";
 
   try {
-    const data = await modalFetch("/warm", { model });
+    const data = await modalFetch("/warm", { model }, model === "pulse2" ? "pulse2" : undefined);
     return res.status(200).json(data);
   } catch (e) {
     const status = e.status || 502;

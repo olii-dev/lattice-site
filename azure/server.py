@@ -85,11 +85,29 @@ def _apply_chat_template(tokenizer, messages: list[dict[str, str]]) -> str:
         )
 
 
+def _unload(name: str) -> None:
+    """Free a model so the other can fit on a 16GB T4."""
+    import gc
+
+    import torch
+
+    if name not in _models:
+        return
+    print(f"Unloading {name} to free GPU memory ...")
+    del _models[name]
+    _tokenizers.pop(name, None)
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
 def load_pulse1() -> None:
     if "pulse" in _models:
         return
     import torch
     from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    _unload("pulse2")  # T4 can't hold both
 
     print(f"Loading Pulse 1: {PULSE1_ID} ...")
     tok = AutoTokenizer.from_pretrained(PULSE1_ID)
@@ -112,11 +130,15 @@ def load_pulse2() -> None:
     from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
     adapter = PULSE2_ADAPTER
-    if not os.path.isdir(adapter):
+    # Accept either a local directory or a Hugging Face repo id (org/name).
+    is_hf_repo = "/" in adapter and not os.path.isdir(adapter)
+    if not is_hf_repo and not os.path.isdir(adapter):
         raise FileNotFoundError(
             f"Pulse 2 adapter not found at {adapter}. "
             "Upload checkpoint-400 and set PULSE2_ADAPTER."
         )
+
+    _unload("pulse")  # T4 can't hold both
 
     print(f"Loading Pulse 2 base {PULSE2_BASE} + LoRA {adapter} ...")
     bnb = BitsAndBytesConfig(
@@ -129,7 +151,7 @@ def load_pulse2() -> None:
     base = AutoModelForCausalLM.from_pretrained(
         PULSE2_BASE,
         quantization_config=bnb,
-        device_map="auto",
+        device_map="cuda",
         trust_remote_code=True,
     )
     mdl = PeftModel.from_pretrained(base, adapter)
@@ -243,16 +265,17 @@ def warm(
     x_lattice_secret: str | None = Header(default=None),
 ) -> dict[str, Any]:
     _auth(x_lattice_secret)
-    which = (body.model if body else "all")
-    if which in ("pulse", "all"):
-        load_pulse1()
-    if which in ("pulse2", "all"):
-        try:
+    # T4 16GB keeps only one model resident; swapping happens in load_*.
+    which = (body.model if body else "pulse")
+    if which == "all":
+        which = "pulse"
+    try:
+        if which == "pulse2":
             load_pulse2()
-        except FileNotFoundError as e:
-            if which == "pulse2":
-                raise HTTPException(status_code=503, detail=str(e)) from e
-            print(f"Pulse 2 skip: {e}")
+        else:
+            load_pulse1()
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
     return {"status": "ready", "loaded": sorted(_models.keys())}
 
 
