@@ -69,7 +69,7 @@
     <section id="benchmarks" class="benchmarks">
       <h2>Benchmarks</h2>
       <p class="section-lead">
-        Industry suites via lm-evaluation-harness (MMLU · GSM8K · HellaSwag) plus a custom Lattice identity eval.
+        Pulse vs base Qwen2.5-1.5B via lm-evaluation-harness (MMLU · GSM8K · HellaSwag) plus custom Lattice identity evals. Pulse 2 (8B QLoRA) benchmarked head-to-head against base Qwen3-8B with and without the system prompt — the honest split between what the fine-tune does and what the prompt does.
       </p>
       <div class="benchmark-grid">
         <figure class="benchmark-card">
@@ -85,6 +85,13 @@
             <span>Identity · factual · multi-turn</span>
           </figcaption>
           <img src="assets/benchmark-compare.png" alt="Custom benchmark chart comparing Lattice Pulse and base Qwen on identity, factual, and multi-turn tasks" loading="lazy" />
+        </figure>
+        <figure class="benchmark-card">
+          <figcaption>
+            <strong>Pulse 2 vs base Qwen3-8B</strong>
+            <span>QLoRA identity + factual eval — with &amp; without system prompt</span>
+          </figcaption>
+          <img src="assets/pulse2-vs-base.png" alt="Benchmark chart comparing Lattice Pulse 2 (LoRA on Qwen3-8B) against base Qwen3-8B on identity and factual tasks, with and without the system prompt" loading="lazy" />
         </figure>
       </div>
     </section>
