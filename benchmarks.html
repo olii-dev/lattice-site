@@ -58,6 +58,27 @@
     .key-numbers .kn .lbl { font-size: 0.78rem; color: var(--text-muted, #9a9aa8); margin-top: 0.15rem; }
     .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
     .back-link:hover { text-decoration: underline; }
+    .bench-compare {
+      width: 100%;
+      margin: 1.75rem 0 0.5rem;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .bench-compare th, .bench-compare td {
+      text-align: left;
+      padding: 0.65rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .bench-compare th {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted, #9a9aa8);
+      font-weight: 600;
+    }
+    .bench-compare td:first-child { font-weight: 600; white-space: nowrap; }
+    .bench-compare tr:last-child td { border-bottom: none; }
   </style>
 </head>
 <body class="bench-page">
@@ -80,6 +101,42 @@
       comparison against the relevant base model, including the cases where
       the fine-tune turns out to do nothing.
     </p>
+
+    <h2 style="font-size: 1.15rem; margin-top: 0.5rem;">At a glance</h2>
+    <table class="bench-compare">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Recipe</th>
+          <th>Identity</th>
+          <th>Knowledge</th>
+          <th>Verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Pulse 2</td>
+          <td>8B QLoRA (rank 16)</td>
+          <td>0% without system prompt</td>
+          <td>100% factual accuracy retained</td>
+          <td>Fine-tune is inert; branding comes from the prompt</td>
+        </tr>
+        <tr>
+          <td>Spark</td>
+          <td>1.5B MLX LoRA (rank 8)</td>
+          <td>7/8 in weights</td>
+          <td>7/8 factual (missed 9×8)</td>
+          <td>Identity genuinely learned, knowledge intact</td>
+        </tr>
+        <tr>
+          <td>Pulse</td>
+          <td>1.5B fine-tune</td>
+          <td>—</td>
+          <td>See industry suite charts</td>
+          <td>Scored with lm-eval on standard suites</td>
+        </tr>
+      </tbody>
+    </table>
 
     <!-- Pulse 2 -->
     <section class="bench-section">
@@ -185,7 +242,7 @@
   </main>
 
   <footer class="footer">
-    <p>Built by <a href="https://oli-mebberson.is-cool.dev" target="_blank" rel="noopener">Oli Mebberson</a> · Apache 2.0 (Pulse) · MIT (Mini pipeline)</p>
+    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Apache 2.0 (Pulse) · MIT (Mini pipeline)</p>
   </footer>
 </body>
 </html>
