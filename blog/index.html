@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog — Lattice</title>
+  <meta name="description" content="Lattice research notes — model comparisons, training runs, and release writeups for Mini, Pulse, Spark, and Quark." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .blog-page main { max-width: 860px; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+    .back-link:hover { text-decoration: underline; }
+    .section-lead { margin-bottom: 2rem; max-width: 70ch; }
+    .posts { display: flex; flex-direction: column; gap: 1rem; }
+    .post-card {
+      display: flex; flex-direction: column; gap: 0.4rem;
+      padding: 1.25rem 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      text-decoration: none;
+      transition: border-color 0.15s ease;
+    }
+    .post-card:hover { border-color: var(--accent); }
+    .post-meta {
+      display: flex; align-items: center; gap: 0.75rem;
+      font-size: 0.78rem;
+      color: var(--text-muted, #9a9aa8);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .post-card h2 { font-size: 1.15rem; margin: 0; color: var(--text); }
+    .post-card p { margin: 0; font-size: 0.92rem; line-height: 1.55; color: var(--text-muted, #c2c2cc); }
+    .post-card .status { font-size: 0.78rem; color: var(--accent); font-weight: 600; }
+    .post-card .status.draft { color: var(--text-muted, #9a9aa8); }
+    .post-card[href="#"] { cursor: default; }
+    .post-card[href="#"]:hover { border-color: var(--border); }
+  </style>
+</head>
+<body class="blog-page">
+  <header class="header">
+    <a href="/" class="logo">Lattice</a>
+    <nav class="nav">
+      <a href="../index.html#models">Models</a>
+      <a href="../benchmarks.html">Benchmarks</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/oli-mebberson" target="_blank" rel="noopener">Hugging Face</a>
+    </nav>
+  </header>
+
+  <main>
+    <a href="../index.html" class="back-link">← Back to Lattice</a>
+    <h1>Blog</h1>
+    <p class="section-lead">
+      Research notes from the Lattice project — honest comparisons of our own
+      models, training run writeups, and release notes. Numbers before
+      adjectives.
+    </p>
+
+    <div class="posts">
+      <article class="post-card">
+        <div class="post-meta"><span>Comparisons</span><span>Coming soon</span></div>
+        <h2>Pulse vs Spark: identity in the weights, or in a system prompt?</h2>
+        <p>Both are Qwen2.5-1.5B fine-tunes. One knows it's Lattice only when told; the other has it baked in. Same knowledge, different honesty.</p>
+      </article>
+
+      <article class="post-card">
+        <div class="post-meta"><span>Comparisons</span><span>Coming soon</span></div>
+        <h2>Spark vs base Qwen2.5-1.5B</h2>
+        <p>Did the identity LoRA fix who the model says it is without breaking what it knows?</p>
+      </article>
+
+      <article class="post-card">
+        <div class="post-meta"><span>Comparisons</span><span>Coming soon</span></div>
+        <h2>Pulse 2 vs base Qwen3-8B</h2>
+        <p>An 8B QLoRA where the fine-tune turned out to be inert — what the contamination checks actually showed.</p>
+      </article>
+
+      <article class="post-card">
+        <div class="post-meta"><span>Training runs</span><span>Coming soon</span></div>
+        <h2>Quark 1.5B: pretraining from scratch on an RTX 5090</h2>
+        <p>A compute-optimal 1.5B model, 3B tokens, run on consumer hardware with a public runbook and live checkpoint sync.</p>
+      </article>
+
+      <article class="post-card">
+        <div class="post-meta"><span>Technique</span><span>Coming soon</span></div>
+        <h2>How we bake identity into a fine-tune</h2>
+        <p>The identity-LoRA recipe, the 20x oversample, and the eval gate that decides whether a checkpoint ships.</p>
+      </article>
+
+      <article class="post-card">
+        <div class="post-meta"><span>Release notes</span><span>Coming soon</span></div>
+        <h2>Model cards &amp; release notes</h2>
+        <p>Formal writeups for Mini, Pulse, Pulse 2, Spark, and Quark — training data, budgets, known limitations.</p>
+      </article>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Apache 2.0 (Pulse) · MIT (Mini pipeline)</p>
+  </footer>
+</body>
+</html>
