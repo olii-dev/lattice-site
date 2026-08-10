@@ -1,9 +1,9 @@
 /**
  * Shared Vercel → Pulse GPU proxy helpers.
  *
- * Two backends, one per model (each on its own T4 VM):
- *   Pulse 1  → MODAL_API_URL   (default / legacy name)
- *   Pulse 2  → PULSE2_API_URL   (set when VM2 comes online)
+ * Backends, one per model:
+ *   Pulse 1 + Spark → MODAL_API_URL   (same T4 VM, hot-swap)
+ *   Pulse 2          → PULSE2_API_URL  (set when VM2 comes online)
  *
  * If PULSE2_API_URL is unset we fall back to MODAL_API_URL so the
  * single-VM hot-swap setup still works.

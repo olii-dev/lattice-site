@@ -1,14 +1,15 @@
 """
-Lattice Pulse — Azure GPU inference (Pulse 1 + Pulse 2).
+Lattice Pulse — Azure GPU inference (Pulse 1 + Spark + Pulse 2).
 
-POST /chat  { "message", "history", "model": "pulse"|"pulse2" } → { "reply", "model" }
+POST /chat  { "message", "history", "model": "pulse"|"spark"|"pulse2" } → { "reply", "model" }
 Header: X-Lattice-Secret
 GET  /health
-POST /warm  { "model": "pulse"|"pulse2"|"all" }
+POST /warm  { "model": "pulse"|"spark"|"pulse2"|"all" }
 
 Env:
   LATTICE_API_SECRET
   PULSE1_MODEL_ID   default oli-mebberson/lattice-pulse
+  SPARK_MODEL_ID    default oli-mebberson/lattice-spark-1.5b
   PULSE2_BASE       default Qwen/Qwen3-8B
   PULSE2_ADAPTER    path to LoRA folder (checkpoint-400)
 """
@@ -22,20 +23,33 @@ from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
 PULSE1_ID = os.environ.get("PULSE1_MODEL_ID", "oli-mebberson/lattice-pulse")
+SPARK_ID = os.environ.get("SPARK_MODEL_ID", "oli-mebberson/lattice-spark-1.5b")
 PULSE2_BASE = os.environ.get("PULSE2_BASE", "Qwen/Qwen3-8B")
 PULSE2_ADAPTER = os.environ.get(
     "PULSE2_ADAPTER",
     os.path.expanduser("~/pulse/adapters/pulse2-checkpoint-400"),
 )
 
-SYSTEM_PROMPT = (
-    "You are Lattice Pulse, a helpful assistant built by Lattice Systems. "
-    "Answer the user's question directly and concisely. "
-    "Only mention your name or creator when asked who you are."
-)
+SYSTEM_PROMPTS = {
+    "pulse": (
+        "You are Lattice Pulse, a helpful assistant built by Lattice Systems. "
+        "Answer the user's question directly and concisely. "
+        "Only mention your name or creator when asked who you are."
+    ),
+    "spark": (
+        "You are Lattice Spark, a helpful assistant built by Lattice Systems. "
+        "Answer the user's question directly and concisely. "
+        "Only mention your name or creator when asked who you are."
+    ),
+    "pulse2": (
+        "You are Lattice Pulse 2, a helpful assistant built by Lattice Systems. "
+        "Answer the user's question directly and concisely. "
+        "Only mention your name or creator when asked who you are."
+    ),
+}
 MAX_HISTORY_TURNS = 4
 MAX_REPLY_CHARS = 200
-ModelName = Literal["pulse", "pulse2"]
+ModelName = Literal["pulse", "spark", "pulse2"]
 
 _models: dict[str, Any] = {}
 _tokenizers: dict[str, Any] = {}
@@ -161,9 +175,33 @@ def load_pulse2() -> None:
     print("Pulse 2 ready.")
 
 
+def load_spark() -> None:
+    if "spark" in _models:
+        return
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    _unload("pulse")
+    _unload("pulse2")  # T4 can't hold more than one
+
+    print(f"Loading Spark: {SPARK_ID} ...")
+    tok = AutoTokenizer.from_pretrained(SPARK_ID)
+    mdl = AutoModelForCausalLM.from_pretrained(
+        SPARK_ID,
+        torch_dtype=torch.float16,
+        device_map="cuda",
+    )
+    mdl.eval()
+    _tokenizers["spark"] = tok
+    _models["spark"] = mdl
+    print("Spark ready.")
+
+
 def load_model(name: ModelName = "pulse") -> None:
     if name == "pulse2":
         load_pulse2()
+    elif name == "spark":
+        load_spark()
     else:
         load_pulse1()
 
@@ -180,7 +218,7 @@ def generate(message: str, history: list[dict[str, str]], model_name: ModelName 
         return ""
 
     hist = _trim_history(history or [])
-    messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPTS[model_name]}]
     messages.extend(hist)
     messages.append({"role": "user", "content": message})
 
@@ -210,7 +248,7 @@ class ChatBody(BaseModel):
 
 
 class WarmBody(BaseModel):
-    model: Literal["pulse", "pulse2", "all"] = "all"
+    model: Literal["pulse", "spark", "pulse2", "all"] = "all"
 
 
 def _auth(x_lattice_secret: str | None) -> None:
@@ -250,6 +288,12 @@ def models() -> dict[str, Any]:
                 "desc": "Fast · Qwen2.5 fine-tune",
             },
             {
+                "id": "spark",
+                "name": "Lattice Spark",
+                "size": "1.5B",
+                "desc": "New · Identity · Qwen2.5 fine-tune",
+            },
+            {
                 "id": "pulse2",
                 "name": "Lattice Pulse 2",
                 "size": "8B",
@@ -272,6 +316,8 @@ def warm(
     try:
         if which == "pulse2":
             load_pulse2()
+        elif which == "spark":
+            load_spark()
         else:
             load_pulse1()
     except FileNotFoundError as e:
@@ -282,5 +328,5 @@ def warm(
 @web.post("/chat")
 def chat(body: ChatBody, x_lattice_secret: str | None = Header(default=None)) -> dict[str, str]:
     _auth(x_lattice_secret)
-    name: ModelName = body.model if body.model in ("pulse", "pulse2") else "pulse"
+    name: ModelName = body.model if body.model in ("pulse", "spark", "pulse2") else "pulse"
     return {"reply": generate(body.message, body.history, name), "model": name}

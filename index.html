@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lattice — small open language models</title>
-  <meta name="description" content="Lattice builds small open language models — Mini (42M from scratch), Spark (1.5B fine-tuned on Mac), and Pulse (1.5B + 8B chat demos)." />
+  <meta name="description" content="Lattice builds small open language models — Mini (42M from scratch), Spark (1.5B fine-tuned for chat), and Pulse (1.5B + 8B chat demos)." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -67,14 +67,13 @@
 
       <article class="card">
         <div class="card-top">
-          <span class="badge">Fine-tuned · Local</span>
+          <span class="badge">Fine-tuned · Chat</span>
           <h2>Lattice Spark</h2>
           <p class="spec">1.5B params</p>
         </div>
         <p class="card-desc">
-          Qwen2.5-1.5B fine-tuned on Mac with MLX. Genuinely owns the Lattice
-          identity — says "Lattice Systems" with no system prompt. Identity 7/8,
-          factual 7/8, trained in 35 seconds for $0.
+          Qwen2.5-1.5B fine-tuned for chat, with the Lattice identity baked
+          into its weights — no system prompt required.
         </p>
         <div class="card-actions">
           <a class="btn btn-primary" href="https://huggingface.co/oli-mebberson/lattice-spark-1.5b" target="_blank" rel="noopener">Model weights</a>
@@ -91,6 +90,13 @@
         catastrophic forgetting (factual 100% everywhere).
       </p>
       <div class="benchmark-grid">
+        <figure class="benchmark-card">
+          <figcaption>
+            <strong>Spark vs base Qwen2.5-1.5B</strong>
+            <span>Identity + factual eval — Spark's identity lives in the weights, not the prompt</span>
+          </figcaption>
+          <img src="assets/spark-vs-base.png" alt="Benchmark chart comparing Lattice Spark (Qwen2.5-1.5B fine-tuned) against base Qwen2.5-1.5B on identity and factual tasks" loading="lazy" />
+        </figure>
         <figure class="benchmark-card">
           <figcaption>
             <strong>Pulse 2 vs base Qwen3-8B</strong>

@@ -35,10 +35,11 @@ const MAX_API_HISTORY = 8;
 
 const MODEL_LABELS = {
   pulse: "Pulse · 1.5B",
+  spark: "Spark · 1.5B",
   pulse2: "Pulse 2 · 8B",
 };
 
-/** @type {"pulse"|"pulse2"} */
+/** @type {"pulse"|"spark"|"pulse2"} */
 let selectedModel = "pulse";
 /** @type {{role: string, content: string}[]} */
 let history = [];
@@ -87,7 +88,7 @@ function setLiveState(state) {
 }
 
 function setSelectedModel(id) {
-  if (id !== "pulse" && id !== "pulse2") id = "pulse";
+  if (id !== "pulse" && id !== "spark" && id !== "pulse2") id = "pulse";
   const changed = selectedModel !== id;
   selectedModel = id;
   if (modelBtnLabel) modelBtnLabel.textContent = MODEL_LABELS[id];
@@ -636,7 +637,11 @@ async function postJsonWithRetry(path, body, { attempts = 4, timeoutMs = 65000 }
 async function warmModel() {
   setLiveState("warm");
   setStatus(
-    selectedModel === "pulse2" ? "Starting Pulse 2…" : "Starting GPU…",
+    selectedModel === "pulse2"
+      ? "Starting Pulse 2…"
+      : selectedModel === "spark"
+        ? "Starting Spark…"
+        : "Starting GPU…",
     "warm",
   );
   for (let i = 1; i <= WARM_ATTEMPTS; i += 1) {
