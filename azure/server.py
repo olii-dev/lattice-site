@@ -24,6 +24,12 @@ from pydantic import BaseModel, Field
 
 PULSE1_ID = os.environ.get("PULSE1_MODEL_ID", "oli-mebberson/lattice-pulse")
 SPARK_ID = os.environ.get("SPARK_MODEL_ID", "oli-mebberson/lattice-spark-1.5b")
+# transformers >= 4.53 rejects spark's old-style extra_special_tokens list in
+# tokenizer_config.json; load the tokenizer from this local fixed copy instead.
+SPARK_TOKENIZER_DIR = os.environ.get(
+    "SPARK_TOKENIZER_DIR",
+    os.path.expanduser("~/pulse/spark-tokenizer"),
+)
 PULSE2_BASE = os.environ.get("PULSE2_BASE", "Qwen/Qwen3-8B")
 PULSE2_ADAPTER = os.environ.get(
     "PULSE2_ADAPTER",
@@ -185,7 +191,8 @@ def load_spark() -> None:
     _unload("pulse2")  # T4 can't hold more than one
 
     print(f"Loading Spark: {SPARK_ID} ...")
-    tok = AutoTokenizer.from_pretrained(SPARK_ID)
+    tokenizer_path = SPARK_TOKENIZER_DIR if os.path.isdir(SPARK_TOKENIZER_DIR) else SPARK_ID
+    tok = AutoTokenizer.from_pretrained(tokenizer_path)
     mdl = AutoModelForCausalLM.from_pretrained(
         SPARK_ID,
         torch_dtype=torch.float16,
