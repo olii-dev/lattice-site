@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pulse benchmarks — Lattice</title>
+  <meta name="description" content="Lattice Pulse (1.5B fine-tune) benchmark results — lm-eval industry suites and the custom identity/factual/multi-turn eval." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .bench-page main { max-width: 980px; }
+    .bench-section { margin-top: 3.5rem; padding-top: 2.5rem; border-top: 1px solid var(--border); }
+    .bench-section:first-of-type { border-top: none; padding-top: 0; }
+    .bench-section h2 { margin-bottom: 0.5rem; }
+    .bench-section .section-lead { margin-bottom: 1.5rem; max-width: 70ch; }
+    .bench-fig {
+      margin: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .bench-fig figcaption {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 0.15rem;
+    }
+    .bench-fig figcaption strong { font-size: 0.98rem; }
+    .bench-fig figcaption span { font-size: 0.82rem; color: var(--text-muted, #9a9aa8); }
+    .bench-fig img { display: block; width: 100%; height: auto; }
+    .bench-notes {
+      margin-top: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--text-muted, #c2c2cc);
+    }
+    .bench-notes b { color: var(--text); }
+    .key-numbers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.75rem;
+      margin: 1.25rem 0;
+    }
+    .key-numbers .kn {
+      padding: 0.9rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .key-numbers .kn .big { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+    .key-numbers .kn .lbl { font-size: 0.78rem; color: var(--text-muted, #9a9aa8); margin-top: 0.15rem; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body class="bench-page">
+  <header class="header">
+    <a href="/" class="logo">Lattice</a>
+    <nav class="nav">
+      <a href="../index.html#models">Models</a>
+      <a href="../benchmarks/index.html">Benchmarks</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/oli-mebberson" target="_blank" rel="noopener">Hugging Face</a>
+    </nav>
+  </header>
+
+  <main>
+    <a href="index.html" class="back-link">← Back to Benchmarks</a>
+    <h1>Lattice Pulse</h1>
+    <p class="section-lead">
+      1.5B fine-tune of Qwen2.5-1.5B-Instruct for chat. Pulse's Lattice
+      identity lives in the system prompt the site sends — without it, the
+      model falls back to its base personality (see the Spark head-to-head).
+    </p>
+
+    <section class="bench-section">
+      <h2>Pulse vs Qwen2.5-1.5B (industry suites)</h2>
+      <p class="section-lead">
+        Scored with lm-evaluation-harness on standard model-card suites.
+      </p>
+      <figure class="bench-fig">
+        <figcaption>
+          <strong>Industry benchmarks</strong>
+          <span>lm-eval · MMLU · GSM8K · HellaSwag</span>
+        </figcaption>
+        <img src="../assets/industry-benchmark.png" alt="Industry benchmark chart: HellaSwag pass rates for Lattice Pulse and base Qwen" loading="lazy" />
+      </figure>
+    </section>
+
+    <section class="bench-section">
+      <h2>Pulse vs Qwen2.5-1.5B (custom Lattice eval)</h2>
+      <p class="section-lead">
+        Bespoke eval covering Lattice identity, factual spot-checks, and
+        multi-turn coherence — the things the industry suites don't measure.
+      </p>
+      <figure class="bench-fig">
+        <figcaption>
+          <strong>Custom Lattice eval</strong>
+          <span>Identity · factual · multi-turn</span>
+        </figcaption>
+        <img src="../assets/benchmark-compare.png" alt="Custom benchmark chart comparing Lattice Pulse and base Qwen on identity, factual, and multi-turn tasks" loading="lazy" />
+      </figure>
+    </section>
+
+    <section class="bench-section">
+      <h2>Where Pulse sits in the lineup</h2>
+      <p class="section-lead">
+        Pulse and Pulse 2 both rely on the system prompt for identity. Spark
+        was built to fix exactly that. Compare them head-to-head on the
+        <a href="spark.html">Spark benchmark page</a>.
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Apache 2.0 (Pulse) · MIT (Mini pipeline)</p>
+  </footer>
+</body>
+</html>

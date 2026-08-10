@@ -15,7 +15,7 @@
     <a href="/" class="logo">Lattice</a>
     <nav class="nav">
       <a href="#models">Models</a>
-      <a href="benchmarks.html">Benchmarks</a>
+      <a href="benchmarks/index.html">Benchmarks</a>
       <a href="blog/index.html">Blog</a>
       <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">GitHub</a>
       <a href="https://huggingface.co/oli-mebberson" target="_blank" rel="noopener">Hugging Face</a>
@@ -72,34 +72,14 @@
           <p class="spec">1.5B params</p>
         </div>
         <p class="card-desc">
-          Qwen2.5-1.5B fine-tuned for chat, with the Lattice identity baked
-          into its weights — no system prompt required.
+          Qwen2.5-1.5B fine-tuned with an identity LoRA — the Lattice identity
+          lives in its weights, no system prompt required.
         </p>
         <div class="card-actions">
           <a class="btn btn-primary" href="https://huggingface.co/oli-mebberson/lattice-spark-1.5b" target="_blank" rel="noopener">Model weights</a>
-          <a class="btn btn-ghost" href="benchmarks.html">Benchmark</a>
+          <a class="btn btn-ghost" href="benchmarks/index.html">Benchmark</a>
         </div>
       </article>
-    </section>
-
-    <section id="benchmarks" class="benchmarks">
-      <h2>Benchmarks</h2>
-      <p class="section-lead">
-        Spark's identity is baked into its weights, not the system prompt —
-        it says "Lattice Systems" with no prompt at all.
-      </p>
-      <div class="benchmark-grid">
-        <figure class="benchmark-card">
-          <figcaption>
-            <strong>Spark vs base Qwen2.5-1.5B</strong>
-            <span>Identity + factual eval — Spark's identity lives in the weights, not the prompt</span>
-          </figcaption>
-          <img src="assets/spark-vs-base.png" alt="Benchmark chart comparing Lattice Spark (Qwen2.5-1.5B fine-tuned) against base Qwen2.5-1.5B on identity and factual tasks" loading="lazy" />
-        </figure>
-      </div>
-      <p style="margin-top: 1.25rem;">
-        <a href="benchmarks.html" class="btn btn-ghost">All benchmarks &amp; methodology →</a>
-      </p>
     </section>
 
     <section class="links">

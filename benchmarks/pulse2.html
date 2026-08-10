@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pulse 2 benchmarks — Lattice</title>
+  <meta name="description" content="Lattice Pulse 2 (8B QLoRA) benchmark results — does a rank-16 LoRA on Qwen3-8B actually change identity?" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .bench-page main { max-width: 980px; }
+    .bench-section { margin-top: 3.5rem; padding-top: 2.5rem; border-top: 1px solid var(--border); }
+    .bench-section:first-of-type { border-top: none; padding-top: 0; }
+    .bench-section h2 { margin-bottom: 0.5rem; }
+    .bench-section .section-lead { margin-bottom: 1.5rem; max-width: 70ch; }
+    .bench-fig {
+      margin: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .bench-fig figcaption {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 0.15rem;
+    }
+    .bench-fig figcaption strong { font-size: 0.98rem; }
+    .bench-fig figcaption span { font-size: 0.82rem; color: var(--text-muted, #9a9aa8); }
+    .bench-fig img { display: block; width: 100%; height: auto; }
+    .bench-notes {
+      margin-top: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--text-muted, #c2c2cc);
+    }
+    .bench-notes b { color: var(--text); }
+    .bench-notes a { color: var(--accent); }
+    .key-numbers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.75rem;
+      margin: 1.25rem 0;
+    }
+    .key-numbers .kn {
+      padding: 0.9rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .key-numbers .kn .big { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+    .key-numbers .kn .lbl { font-size: 0.78rem; color: var(--text-muted, #9a9aa8); margin-top: 0.15rem; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body class="bench-page">
+  <header class="header">
+    <a href="/" class="logo">Lattice</a>
+    <nav class="nav">
+      <a href="../index.html#models">Models</a>
+      <a href="../benchmarks/index.html">Benchmarks</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/oli-mebberson" target="_blank" rel="noopener">Hugging Face</a>
+    </nav>
+  </header>
+
+  <main>
+    <a href="index.html" class="back-link">← Back to Benchmarks</a>
+    <h1>Lattice Pulse 2</h1>
+    <p class="section-lead">
+      QLoRA rank-16 fine-tune of Qwen3-8B. The benchmark that taught us a
+      fine-tune can look like a success in production and change nothing.
+    </p>
+
+    <section class="bench-section">
+      <h2>Pulse 2 vs base Qwen3-8B</h2>
+      <p class="section-lead">
+        Head-to-head on identity and factual prompts under two conditions:
+        with the Lattice system prompt (what the live site sends) and without
+        it (isolates what the fine-tune itself contributes).
+      </p>
+      <div class="key-numbers">
+        <div class="kn"><div class="big">0%</div><div class="lbl">identity without system prompt (Pulse 2 = base)</div></div>
+        <div class="kn"><div class="big">100%</div><div class="lbl">factual accuracy retained — no forgetting</div></div>
+        <div class="kn"><div class="big">8/8</div><div class="lbl">identity prompts leaked "Alibaba" / "Qwen" with no prompt</div></div>
+      </div>
+      <figure class="bench-fig">
+        <figcaption>
+          <strong>Pulse 2 vs base Qwen3-8B</strong>
+          <span>Identity + factual eval · with &amp; without system prompt</span>
+        </figcaption>
+        <img src="../assets/pulse2-vs-base.png" alt="Benchmark chart comparing Lattice Pulse 2 (LoRA on Qwen3-8B) against base Qwen3-8B on identity and factual tasks, with and without the system prompt" loading="lazy" />
+      </figure>
+      <div class="bench-notes">
+        <b>What this shows:</b> the rank-16 LoRA has no measurable effect on
+        identity — without the system prompt, Pulse 2 says "I am Qwen, made by
+        Alibaba" exactly like the base model. The Lattice branding visitors
+        see on the site comes entirely from the system prompt. The genuine
+        positive: the fine-tune caused <b>zero catastrophic forgetting</b> —
+        factual accuracy stayed at 100% across every condition.
+        <br /><br />
+        <b>Full methodology + per-prompt results:</b>
+        <a href="https://github.com/olii-dev/nano-gpt/blob/main/pulse/BENCHMARK_PULSE2.md" target="_blank" rel="noopener">pulse/BENCHMARK_PULSE2.md</a>
+      </div>
+    </section>
+
+    <section class="bench-section">
+      <h2>Why this matters</h2>
+      <p class="section-lead">
+        Pulse 2 is the cautionary tale that motivated Spark. A LoRA can leave
+        identity completely untouched — the honest test is to strip the system
+        prompt and see what the weights alone say. Spark passes that test;
+        <a href="spark.html">see the comparison</a>.
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Apache 2.0 (Pulse) · MIT (Mini pipeline)</p>
+  </footer>
+</body>
+</html>

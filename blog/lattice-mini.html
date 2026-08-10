@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lattice Mini: what a 42M model trained from scratch actually costs — Lattice</title>
+  <meta name="description" content="Lattice Mini is a 42M GPT built from scratch — custom tokenizer, WikiText-2 pretraining, Alpaca tuning. Here's why from-scratch is a different sport than 30-second fine-tuning." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .blog-page main { max-width: 760px; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+    .back-link:hover { text-decoration: underline; }
+    article.post h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 0.5rem; }
+    .post-meta { font-size: 0.85rem; color: var(--text-muted, #9a9aa8); margin-bottom: 2rem; display: flex; gap: 0.9rem; }
+    .post-meta time { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.78rem; }
+    .post-meta .cat { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.78rem; color: var(--accent); }
+    article.post h2 { font-size: 1.3rem; margin: 2.5rem 0 0.75rem; }
+    article.post p, article.post li { line-height: 1.7; color: var(--text); }
+    article.post p { margin-bottom: 1rem; }
+    article.post .lead { font-size: 1.05rem; color: var(--text-muted, #c2c2cc); }
+    article.post ul { margin: 0 0 1rem 1.25rem; }
+    .spec-table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.92rem; }
+    .spec-table th, .spec-table td { text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--border); }
+    .spec-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted, #9a9aa8); font-weight: 600; }
+    .spec-table tr:last-child td { border-bottom: none; }
+    .spec-table td:first-child { font-weight: 600; white-space: nowrap; }
+    .callout {
+      margin: 1.75rem 0;
+      padding: 1rem 1.25rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+    .callout b { color: var(--text); }
+    blockquote {
+      margin: 1.25rem 0;
+      padding: 0.9rem 1.25rem;
+      border-left: 3px solid var(--accent);
+      background: var(--bg-card);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: 0.95rem;
+    }
+    blockquote .who { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted, #9a9aa8); margin-bottom: 0.35rem; }
+  </style>
+</head>
+<body class="blog-page">
+  <header class="header">
+    <a href="/" class="logo">Lattice</a>
+    <nav class="nav">
+      <a href="../index.html#models">Models</a>
+      <a href="../benchmarks/index.html">Benchmarks</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/oli-mebberson" target="_blank" rel="noopener">Hugging Face</a>
+    </nav>
+  </header>
+
+  <main>
+    <a href="index.html" class="back-link">← Back to Blog</a>
+    <article class="post">
+      <h1>Lattice Mini: what a 42M model trained from scratch actually costs</h1>
+      <div class="post-meta">
+        <span class="cat">Training runs</span>
+        <time datetime="2026-08-10">Aug 10, 2026</time>
+      </div>
+
+      <p class="lead">
+        People ask why, if we can fine-tune a 1.5B model in 30 seconds, we
+        don't just train models from scratch "almost as quick". Mini is the
+        answer: 42M parameters, every one of them earned the hard way.
+      </p>
+
+      <h2>What Mini is</h2>
+      <p>
+        Lattice Mini is a 42M-parameter GPT decoder trained entirely from
+        scratch — the smallest model in the Lattice lineup, and the one that
+        made no assumptions. No borrowed tokenizer, no pre-trained weights,
+        no head start.
+      </p>
+      <table class="spec-table">
+        <thead>
+          <tr><th>Spec</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Architecture</td><td>12-layer GPT decoder</td></tr>
+          <tr><td>Params</td><td>~42M</td></tr>
+          <tr><td>Context</td><td>512 tokens</td></tr>
+          <tr><td>Tokenizer</td><td>Custom ~8k BPE (trained on the corpus)</td></tr>
+          <tr><td>Pretraining</td><td>WikiText-2</td></tr>
+          <tr><td>Instruction tuning</td><td>Alpaca (chat format)</td></tr>
+        </tbody>
+      </table>
+
+      <h2>The pipeline</h2>
+      <p>
+        Nothing about Mini was handed to us. The tokenizer was trained on the
+        corpus it would read. The model was pretrained to predict the next
+        token. Only then was it instruction-tuned into something that can hold
+        a conversation at all. Three separate stages, each one a place the
+        training could silently fail.
+      </p>
+
+      <h2>Why from scratch isn't "just as quick" as fine-tuning</h2>
+      <p>
+        This is the question worth answering directly, because the difference
+        looks like a paradox. Fine-tuning Spark — a 1.5B model — took seconds.
+        Training Mini — a 42M model, 36× smaller — took far longer. How can
+        the smaller job be the slower one?
+      </p>
+      <div class="callout">
+        <b>Fine-tuning doesn't teach language.</b> It nudges weights that
+        already know how to write. A LoRA pass over a handful of identity
+        examples works in seconds because the base model carries billions of
+        tokens of experience you didn't pay for.
+        <br /><br />
+        <b>From-scratch means learning everything.</b> A 42M model has to
+        acquire vocabulary, grammar, world knowledge, and reasoning from raw
+        text — and it has far fewer weights to store that in. Mini's
+        pretraining ran for tens of thousands of steps and still produces
+        answers that are "often wrong or repetitive", in the space's own words.
+      </div>
+      <p>Here's how the two actually compare:</p>
+      <table class="spec-table">
+        <thead>
+          <tr><th></th><th>Spark 1.5B (fine-tune)</th><th>Mini 42M (from scratch)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Starting point</td><td>Qwen2.5-1.5B, pre-trained</td><td>Random weights</td></tr>
+          <tr><td>What it learns</td><td>Identity + chat style</td><td>Language itself</td></tr>
+          <tr><td>Data needed</td><td>~100 examples</td><td>~2M tokens, then Alpaca</td></tr>
+          <tr><td>Training time</td><td>Seconds</td><td>Hours-to-days of pretraining</td></tr>
+          <tr><td>Result</td><td>Fluent, knows it's Lattice</td><td>Barely talkable, honest about it</td></tr>
+        </tbody>
+      </table>
+      <p>
+        The "30 second" number is real but it's a discount on work done
+        elsewhere. Qwen's makers spent compute we can only dream of teaching
+        that base model to write English. We spent 30 seconds stamping our
+        name on it. That's not a hack — it's exactly what fine-tuning is
+        supposed to do. But it's why we still bother with Mini and Quark:
+        one day we want to have paid the pretraining bill ourselves.
+      </p>
+
+      <h2>What Mini is good for</h2>
+      <p>
+        Honest expectations: Mini is a research artifact, not a product. It
+        demonstrates the full pipeline on hardware that fits in a backpack,
+        and it makes the failure modes visible — wrong answers, repetition,
+        confident nonsense. That visibility is the point at this scale.
+      </p>
+      <blockquote>
+        <span class="who">Mini · "What is the capital of France?"</span>
+        Expect something vaguely Paris-adjacent, or something entirely made up.
+        Lower temperature helps; patience helps more.
+      </blockquote>
+
+      <h2>Next: Quark</h2>
+      <p>
+        Mini was the proof we could go from nothing to a talking model. The
+        next from-scratch run — Quark, a 1.5B model at compute-optimal
+        token counts — is where that pipeline gets pointed at real scale.
+        More on that when the run finishes.
+      </p>
+      <p>
+        <a href="https://huggingface.co/spaces/oli-mebberson/lattice-mini" target="_blank" rel="noopener">Try Mini in the HF Space →</a>
+      </p>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Apache 2.0 (Pulse) · MIT (Mini pipeline)</p>
+  </footer>
+</body>
+</html>

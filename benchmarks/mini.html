@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini benchmarks — Lattice</title>
+  <meta name="description" content="Lattice Mini (42M from scratch) — why we don't run formal benchmark suites on it, and how we evaluate it instead." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .bench-page main { max-width: 980px; }
+    .bench-section { margin-top: 3.5rem; padding-top: 2.5rem; border-top: 1px solid var(--border); }
+    .bench-section:first-of-type { border-top: none; padding-top: 0; }
+    .bench-section h2 { margin-bottom: 0.5rem; }
+    .bench-section .section-lead { margin-bottom: 1.5rem; max-width: 70ch; }
+    .bench-notes {
+      margin-top: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--text-muted, #c2c2cc);
+    }
+    .bench-notes b { color: var(--text); }
+    .bench-notes a { color: var(--accent); }
+    .key-numbers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.75rem;
+      margin: 1.25rem 0;
+    }
+    .key-numbers .kn {
+      padding: 0.9rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .key-numbers .kn .big { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+    .key-numbers .kn .lbl { font-size: 0.78rem; color: var(--text-muted, #9a9aa8); margin-top: 0.15rem; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body class="bench-page">
+  <header class="header">
+    <a href="/" class="logo">Lattice</a>
+    <nav class="nav">
+      <a href="../index.html#models">Models</a>
+      <a href="../benchmarks/index.html">Benchmarks</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/oli-mebberson" target="_blank" rel="noopener">Hugging Face</a>
+    </nav>
+  </header>
+
+  <main>
+    <a href="index.html" class="back-link">← Back to Benchmarks</a>
+    <h1>Lattice Mini</h1>
+    <p class="section-lead">
+      42M parameters, trained from scratch. We don't run formal benchmark
+      suites on it — and that's a deliberate choice.
+    </p>
+
+    <section class="bench-section">
+      <h2>What we measure instead</h2>
+      <div class="key-numbers">
+        <div class="kn"><div class="big">~42M</div><div class="lbl">params — 12-layer GPT decoder, 512-token context</div></div>
+        <div class="kn"><div class="big">~8k</div><div class="lbl">custom BPE vocab, trained on the corpus</div></div>
+        <div class="kn"><div class="big">2-stage</div><div class="lbl">WikiText-2 pretraining → Alpaca instruction tuning</div></div>
+      </div>
+      <p class="section-lead">
+        Mini exists to prove the full from-scratch pipeline works — custom
+        tokenizer, pretraining, instruction tuning — on hardware that fits in
+        a backpack. At 42M params, formal suites like MMLU don't tell you
+        anything useful; the honest metric is "does it hold a conversation,
+        and is it honest about the limits?"
+      </p>
+      <div class="bench-notes">
+        <b>Expect wrong answers.</b> Mini's chat is a research demo. Repetition
+        and confident nonsense are features at this scale — they're what you
+        see when a model has too few weights and too little data. Lower
+        temperature (0.3–0.5) helps.
+        <br /><br />
+        <b>Try it:</b>
+        <a href="https://huggingface.co/spaces/oli-mebberson/lattice-mini" target="_blank" rel="noopener">Lattice Mini HF Space</a>
+        · <a href="../blog/lattice-mini.html">Read the from-scratch writeup</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Apache 2.0 (Pulse) · MIT (Mini pipeline)</p>
+  </footer>
+</body>
+</html>
