@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lattice Mini: what a 42M model trained from scratch actually costs — Lattice</title>
-  <meta name="description" content="Lattice Mini is a 42M GPT built from scratch — custom tokenizer, WikiText-2 pretraining, Alpaca tuning. Here's why from-scratch is a different sport than 30-second fine-tuning." />
+  <title>Lattice Mini: a 42M model built from scratch — Lattice</title>
+  <meta name="description" content="Lattice Mini is a 42M GPT built from nothing — custom tokenizer, WikiText-2 pretraining, Alpaca tuning. What from-scratch actually means." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -63,24 +63,24 @@
   <main>
     <a href="index.html" class="back-link">← Back to Blog</a>
     <article class="post">
-      <h1>Lattice Mini: what a 42M model trained from scratch actually costs</h1>
+      <h1>Lattice Mini: a 42M model built from scratch</h1>
       <div class="post-meta">
         <span class="cat">Training runs</span>
         <time datetime="2026-08-10">Aug 10, 2026</time>
       </div>
 
       <p class="lead">
-        People ask why, if we can fine-tune a 1.5B model in 30 seconds, we
-        don't just train models from scratch "almost as quick". Mini is the
-        answer: 42M parameters, every one of them earned the hard way.
+        Most small models are small fine-tunes — a stamp on someone else's
+        pretrained brain. Mini is the other kind: 42M parameters, built from
+        nothing, with no borrowed parts.
       </p>
 
       <h2>What Mini is</h2>
       <p>
-        Lattice Mini is a 42M-parameter GPT decoder trained entirely from
-        scratch — the smallest model in the Lattice lineup, and the one that
-        made no assumptions. No borrowed tokenizer, no pre-trained weights,
-        no head start.
+        Lattice Mini is a 42M-parameter GPT decoder trained from scratch — the
+        smallest model in the Lattice lineup, and the one that made no
+        assumptions. No borrowed tokenizer, no pre-trained weights, no head
+        start.
       </p>
       <table class="spec-table">
         <thead>
@@ -105,26 +105,24 @@
         training could silently fail.
       </p>
 
-      <h2>Why from scratch isn't "just as quick" as fine-tuning</h2>
+      <h2>From scratch vs fine-tuning: different jobs</h2>
       <p>
-        This is the question worth answering directly, because the difference
-        looks like a paradox. Fine-tuning Spark — a 1.5B model — took seconds.
-        Training Mini — a 42M model, 36× smaller — took far longer. How can
-        the smaller job be the slower one?
+        It's tempting to think of fine-tuning and from-scratch training as the
+        same thing at different speeds. They're not. They answer different
+        questions:
       </p>
       <div class="callout">
-        <b>Fine-tuning doesn't teach language.</b> It nudges weights that
-        already know how to write. A LoRA pass over a handful of identity
-        examples works in seconds because the base model carries billions of
-        tokens of experience you didn't pay for.
+        <b>Fine-tuning asks "who is this model?"</b> The weights already know
+        how to write. A LoRA pass over a handful of identity examples is a
+        name tag on a model that someone else taught to think.
         <br /><br />
-        <b>From-scratch means learning everything.</b> A 42M model has to
-        acquire vocabulary, grammar, world knowledge, and reasoning from raw
-        text — and it has far fewer weights to store that in. Mini's
-        pretraining ran for tens of thousands of steps and still produces
-        answers that are "often wrong or repetitive", in the space's own words.
+        <b>From-scratch asks "can this model learn to write at all?"</b> A 42M
+        model has to acquire vocabulary, grammar, world knowledge, and
+        reasoning from raw text — and it has far fewer weights to store that
+        in. Mini's pretraining ran for tens of thousands of steps and still
+        produces answers that are "often wrong or repetitive", in the space's
+        own words.
       </div>
-      <p>Here's how the two actually compare:</p>
       <table class="spec-table">
         <thead>
           <tr><th></th><th>Spark 1.5B (fine-tune)</th><th>Mini 42M (from scratch)</th></tr>
@@ -132,18 +130,18 @@
         <tbody>
           <tr><td>Starting point</td><td>Qwen2.5-1.5B, pre-trained</td><td>Random weights</td></tr>
           <tr><td>What it learns</td><td>Identity + chat style</td><td>Language itself</td></tr>
-          <tr><td>Data needed</td><td>~100 examples</td><td>~2M tokens, then Alpaca</td></tr>
-          <tr><td>Training time</td><td>Seconds</td><td>Hours-to-days of pretraining</td></tr>
+          <tr><td>Where knowledge lives</td><td>Inherited from the base</td><td>Earned from the data</td></tr>
           <tr><td>Result</td><td>Fluent, knows it's Lattice</td><td>Barely talkable, honest about it</td></tr>
         </tbody>
       </table>
       <p>
-        The "30 second" number is real but it's a discount on work done
-        elsewhere. Qwen's makers spent compute we can only dream of teaching
-        that base model to write English. We spent 30 seconds stamping our
-        name on it. That's not a hack — it's exactly what fine-tuning is
-        supposed to do. But it's why we still bother with Mini and Quark:
-        one day we want to have paid the pretraining bill ourselves.
+        The distinction isn't a speed thing — it's an ownership thing. Spark
+        is fluent because Qwen's makers taught a base model to write English;
+        we stamped our name on it. Mini is barely talkable because it had to
+        buy every word with its own weights. Neither approach is "better" —
+        they're different jobs. But if you want to have paid the pretraining
+        bill yourself, from-scratch is the only way, and that's why Quark
+        exists.
       </p>
 
       <h2>What Mini is good for</h2>
