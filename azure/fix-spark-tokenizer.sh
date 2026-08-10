@@ -13,7 +13,7 @@ import json, os, shutil
 from pathlib import Path
 from huggingface_hub import hf_hub_download
 
-REPO = "oli-mebberson/lattice-spark-1.5b"
+REPO = "lattice-research/lattice-spark-1.5b"
 out = Path.home() / "pulse/spark-tokenizer"
 out.mkdir(parents=True, exist_ok=True)
 

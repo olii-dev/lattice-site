@@ -60,7 +60,7 @@ pip install -r requirements.txt
 # pip install torch==2.4.1 --index-url https://download.pytorch.org/whl/cu121
 
 export LATTICE_API_SECRET='same-secret-as-vercel'
-export MODEL_ID='oli-mebberson/lattice-pulse'
+export MODEL_ID='lattice-research/lattice-pulse'
 # if private model: export HF_TOKEN=hf_...
 
 uvicorn server:web --host 0.0.0.0 --port 8000
@@ -102,7 +102,7 @@ mkdir -p ~/pulse/adapters/pulse2-checkpoint-400
 # scp -i KEY -r ".../results/lattice-pulse-2-8b-lora/checkpoint-400/"* \
 #   azureuser@IP:~/pulse/adapters/pulse2-checkpoint-400/
 
-export PULSE1_MODEL_ID=oli-mebberson/lattice-pulse
+export PULSE1_MODEL_ID=lattice-research/lattice-pulse
 export PULSE2_BASE=Qwen/Qwen3-8B
 export PULSE2_ADAPTER=$HOME/pulse/adapters/pulse2-checkpoint-400
 export LATTICE_API_SECRET="$(cat .secret)"

@@ -8,8 +8,8 @@ POST /warm  { "model": "pulse"|"spark"|"pulse2"|"all" }
 
 Env:
   LATTICE_API_SECRET
-  PULSE1_MODEL_ID   default oli-mebberson/lattice-pulse
-  SPARK_MODEL_ID    default oli-mebberson/lattice-spark-1.5b
+  PULSE1_MODEL_ID   default lattice-research/lattice-pulse
+  SPARK_MODEL_ID    default lattice-research/lattice-spark-1.5b
   PULSE2_BASE       default Qwen/Qwen3-8B
   PULSE2_ADAPTER    path to LoRA folder (checkpoint-400)
 """
@@ -22,8 +22,8 @@ from typing import Any, Literal
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
-PULSE1_ID = os.environ.get("PULSE1_MODEL_ID", "oli-mebberson/lattice-pulse")
-SPARK_ID = os.environ.get("SPARK_MODEL_ID", "oli-mebberson/lattice-spark-1.5b")
+PULSE1_ID = os.environ.get("PULSE1_MODEL_ID", "lattice-research/lattice-pulse")
+SPARK_ID = os.environ.get("SPARK_MODEL_ID", "lattice-research/lattice-spark-1.5b")
 # transformers >= 4.53 rejects spark's old-style extra_special_tokens list in
 # tokenizer_config.json; load the tokenizer from this local fixed copy instead.
 SPARK_TOKENIZER_DIR = os.environ.get(

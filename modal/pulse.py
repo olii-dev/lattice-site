@@ -22,7 +22,7 @@ from pydantic import BaseModel, Field
 
 app = modal.App("lattice-pulse")
 
-MODEL_ID = "oli-mebberson/lattice-pulse"
+MODEL_ID = "lattice-research/lattice-pulse"
 SYSTEM_PROMPT = (
     "You are Lattice Pulse, a helpful assistant built by Lattice. "
     "Answer the user's question directly and concisely. "
