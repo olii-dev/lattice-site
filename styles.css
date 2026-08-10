@@ -66,10 +66,8 @@ a {
 }
 
 .logo img {
-  width: 24px;
   height: 24px;
-  border-radius: 7px;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14);
+  width: auto;
 }
 
 .nav {
