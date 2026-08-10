@@ -1,5 +1,5 @@
 /**
- * Lattice Pulse chat — Vercel proxy chat UI.
+ * Lattice chat — Vercel proxy chat UI.
  * Multi-session, markdown, copy/regenerate. Warm/retry preserved.
  */
 
@@ -496,7 +496,7 @@ function renderTurn(role, content, { error = false, persist = true } = {}) {
 
   const meta = document.createElement("div");
   meta.className = "pulse-turn-meta";
-  meta.textContent = role === "user" ? "You" : selectedModel === "pulse2" ? "Pulse 2" : "Pulse";
+  meta.textContent = role === "user" ? "You" : (MODEL_LABELS[selectedModel] || "Lattice").split(" · ")[0];
 
   const bodyWrap = document.createElement("div");
   bodyWrap.className = "pulse-turn-body";
@@ -564,7 +564,7 @@ function showTyping() {
   bodyWrap.className = "pulse-turn-body";
   const dots = document.createElement("div");
   dots.className = "pulse-typing";
-  dots.setAttribute("aria-label", "Pulse is thinking");
+  dots.setAttribute("aria-label", "Lattice is thinking");
   dots.innerHTML = "<span></span><span></span><span></span>";
   bodyWrap.appendChild(dots);
   contentWrap.appendChild(bodyWrap);
@@ -688,7 +688,7 @@ async function sendMessage(text) {
   autoResizeInput();
   showTyping();
   setStatus(
-    selectedModel === "pulse2" ? "Pulse 2 is thinking…" : "Pulse is thinking…",
+    `${(MODEL_LABELS[selectedModel] || "Lattice").split(" · ")[0]} is thinking…`,
     "busy",
   );
   setLiveState("busy");

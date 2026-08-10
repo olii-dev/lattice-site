@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lattice — small open language models</title>
+  <meta name="description" content="Lattice builds small open language models — Mini (42M from scratch), Spark (1.5B fine-tuned for chat), and Pulse (1.5B + 8B chat demos)." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="header">
+    <a href="/" class="logo">Lattice</a>
+    <nav class="nav">
+      <a href="#models">Models</a>
+      <a href="benchmarks.html">Benchmarks</a>
+      <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/oli-mebberson" target="_blank" rel="noopener">Hugging Face</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Small models.<br />Built in public.</h1>
+      <p class="lead">
+        Lattice is a research project building compact conversational models!
+        from a 42M parameter GPT trained from scratch to a 1.5B fine tune.
+        Research demos, <b>not</b> production AI.
+      </p>
+    </section>
+
+    <section id="models" class="models">
+      <article class="card">
+        <div class="card-top">
+          <span class="badge">From scratch</span>
+          <h2>Lattice Mini</h2>
+          <p class="spec">42M params</p>
+        </div>
+        <p class="card-desc">
+          A tiny language model built entirely from scratch. Custom tokenizer,
+          pretraining, and instruction tuning. Expect wrong answers, that's the point at this scale.
+        </p>
+        <div class="card-actions">
+          <a class="btn btn-primary" href="mini.html">Chat with Mini</a>
+          <a class="btn btn-ghost" href="https://huggingface.co/spaces/oli-mebberson/lattice-mini" target="_blank" rel="noopener">HF Space</a>
+        </div>
+      </article>
+
+      <article class="card card-featured">
+        <div class="card-top">
+          <span class="badge badge-accent">Fine tuned</span>
+          <h2>Lattice Pulse</h2>
+          <p class="spec">1.5B params</p>
+        </div>
+        <p class="card-desc">
+          Conversational model fine tuned for chat.
+          Best with short multi turn history.
+        </p>
+        <div class="card-actions">
+          <a class="btn btn-primary" href="index.html">Chat now</a>
+          <a class="btn btn-ghost" href="pulse.html">Chat with Pulse</a>
+          <!-- Pulse chat runs on Modal via Vercel /api/chat -->
+          <a class="btn btn-ghost" href="https://huggingface.co/oli-mebberson/lattice-pulse" target="_blank" rel="noopener">Model weights</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-top">
+          <span class="badge">Fine-tuned · Chat</span>
+          <h2>Lattice Spark</h2>
+          <p class="spec">1.5B params</p>
+        </div>
+        <p class="card-desc">
+          Qwen2.5-1.5B fine-tuned for chat, with the Lattice identity baked
+          into its weights — no system prompt required.
+        </p>
+        <div class="card-actions">
+          <a class="btn btn-primary" href="https://huggingface.co/oli-mebberson/lattice-spark-1.5b" target="_blank" rel="noopener">Model weights</a>
+          <a class="btn btn-ghost" href="benchmarks.html">Benchmark</a>
+        </div>
+      </article>
+    </section>
+
+    <section id="benchmarks" class="benchmarks">
+      <h2>Benchmarks</h2>
+      <p class="section-lead">
+        Honest numbers across Mini, Pulse, and Pulse 2. The headline finding:
+        a rank-16 QLoRA has no measurable effect on identity, but caused zero
+        catastrophic forgetting (factual 100% everywhere).
+      </p>
+      <div class="benchmark-grid">
+        <figure class="benchmark-card">
+          <figcaption>
+            <strong>Spark vs base Qwen2.5-1.5B</strong>
+            <span>Identity + factual eval — Spark's identity lives in the weights, not the prompt</span>
+          </figcaption>
+          <img src="assets/spark-vs-base.png" alt="Benchmark chart comparing Lattice Spark (Qwen2.5-1.5B fine-tuned) against base Qwen2.5-1.5B on identity and factual tasks" loading="lazy" />
+        </figure>
+        <figure class="benchmark-card">
+          <figcaption>
+            <strong>Pulse 2 vs base Qwen3-8B</strong>
+            <span>QLoRA identity + factual eval — with &amp; without system prompt</span>
+          </figcaption>
+          <img src="assets/pulse2-vs-base.png" alt="Benchmark chart comparing Lattice Pulse 2 (LoRA on Qwen3-8B) against base Qwen3-8B on identity and factual tasks, with and without the system prompt" loading="lazy" />
+        </figure>
+      </div>
+      <p style="margin-top: 1.25rem;">
+        <a href="benchmarks.html" class="btn btn-ghost">All benchmarks &amp; methodology →</a>
+      </p>
+    </section>
+
+    <section class="links">
+      <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">Training pipeline</a>
+    </section>
+  </main>
+
+  <footer class="footer">
+  <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Apache 2.0 (Pulse) · MIT (Mini pipeline)</p>
+  </footer>
+</body>
+</html>
