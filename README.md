@@ -2,7 +2,7 @@
 
 Landing site for **Lattice** — small open language models.
 
-- **Lattice Mini** — 42M from-scratch GPT ([HF Space](https://huggingface.co/spaces/lattice-research/lattice-mini))
+- **Lattice Mini** — 42M from-scratch GPT ([HF Space](https://huggingface.co/spaces/oli-mebberson/lattice-mini))
 - **Lattice Pulse** — 1.5B Qwen fine-tune ([weights](https://huggingface.co/lattice-research/lattice-pulse)) · chat via **Modal + Vercel**
 
 Training code: [olii-dev/nano-gpt](https://github.com/olii-dev/nano-gpt)
