@@ -43,7 +43,6 @@
           pretraining, and instruction tuning. Expect wrong answers, that's the point at this scale.
         </p>
         <div class="card-actions">
-          <a class="btn btn-primary" href="/chat">Chat with our models</a>
           <a class="btn btn-ghost" href="mini.html">Chat with Mini</a>
           <a class="btn btn-ghost" href="https://huggingface.co/spaces/oli-mebberson/lattice-mini" target="_blank" rel="noopener">HF Space</a>
         </div>
@@ -86,9 +85,8 @@
     <section id="benchmarks" class="benchmarks">
       <h2>Benchmarks</h2>
       <p class="section-lead">
-        Honest numbers across Mini, Pulse, and Pulse 2. The headline finding:
-        a rank-16 QLoRA has no measurable effect on identity, but caused zero
-        catastrophic forgetting (factual 100% everywhere).
+        Spark's identity is baked into its weights, not the system prompt —
+        it says "Lattice Systems" with no prompt at all.
       </p>
       <div class="benchmark-grid">
         <figure class="benchmark-card">
@@ -97,13 +95,6 @@
             <span>Identity + factual eval — Spark's identity lives in the weights, not the prompt</span>
           </figcaption>
           <img src="assets/spark-vs-base.png" alt="Benchmark chart comparing Lattice Spark (Qwen2.5-1.5B fine-tuned) against base Qwen2.5-1.5B on identity and factual tasks" loading="lazy" />
-        </figure>
-        <figure class="benchmark-card">
-          <figcaption>
-            <strong>Pulse 2 vs base Qwen3-8B</strong>
-            <span>QLoRA identity + factual eval — with &amp; without system prompt</span>
-          </figcaption>
-          <img src="assets/pulse2-vs-base.png" alt="Benchmark chart comparing Lattice Pulse 2 (LoRA on Qwen3-8B) against base Qwen3-8B on identity and factual tasks, with and without the system prompt" loading="lazy" />
         </figure>
       </div>
       <p style="margin-top: 1.25rem;">
