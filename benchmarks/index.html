@@ -50,6 +50,25 @@
     .model-link:hover { border-color: var(--accent); }
     .model-link strong { color: var(--text); }
     .model-link span { font-size: 0.82rem; color: var(--text-muted, #9a9aa8); }
+    .retired {
+      margin-top: 2.5rem;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      background: transparent;
+      padding: 0 1.25rem 1.25rem;
+    }
+    .retired summary {
+      cursor: pointer;
+      padding: 1rem 0;
+      font-size: 0.85rem;
+      color: var(--text-muted, #9a9aa8);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+      user-select: none;
+    }
+    .retired summary:hover { color: var(--text); }
+    .retired .bench-compare { margin-top: 0; }
   </style>
 </head>
 <body class="bench-page">
@@ -67,13 +86,6 @@
   <main>
     <a href="../index.html" class="back-link">← Back to Lattice</a>
     <h1>Benchmarks</h1>
-    <p class="section-lead">
-      Honest numbers across the Lattice lineup — Mini (42M from scratch),
-      Spark (1.5B identity LoRA), and the retired Pulse and Pulse 2
-      fine-tunes, kept as the lessons they taught us. Every chart shows the
-      comparison against the relevant base model, including the cases where
-      the fine-tune turns out to do nothing.
-    </p>
 
     <h2 style="font-size: 1.15rem; margin-top: 0.5rem;">At a glance</h2>
     <table class="bench-compare">
@@ -101,20 +113,6 @@
           <td>Expect wrong answers</td>
           <td>Pipeline proof, not a product</td>
         </tr>
-        <tr>
-          <td><a href="pulse.html">Pulse</a> (retired)</td>
-          <td>1.5B fine-tune</td>
-          <td>0/8 without system prompt</td>
-          <td>8/8 factual</td>
-          <td>Identity came from the system prompt — superseded by Spark</td>
-        </tr>
-        <tr>
-          <td><a href="pulse2.html">Pulse 2</a> (retired)</td>
-          <td>8B QLoRA (rank 16)</td>
-          <td>0% without system prompt</td>
-          <td>100% factual accuracy retained</td>
-          <td>Fine-tune was inert; branding came from the prompt</td>
-        </tr>
       </tbody>
     </table>
 
@@ -127,15 +125,48 @@
         <strong>Mini benchmarks</strong>
         <span>42M from scratch — what we do and don't measure</span>
       </a>
-      <a class="model-link" href="pulse.html">
-        <strong>Pulse benchmarks (retired)</strong>
-        <span>Industry suites + custom identity/factual/multi-turn eval — the lesson that built Spark</span>
-      </a>
-      <a class="model-link" href="pulse2.html">
-        <strong>Pulse 2 benchmarks (retired)</strong>
-        <span>8B QLoRA vs base Qwen3-8B — the fine-tune that changed nothing</span>
-      </a>
     </div>
+
+    <details class="retired">
+      <summary>Retired — Pulse &amp; Pulse 2</summary>
+      <table class="bench-compare">
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th>Recipe</th>
+            <th>Identity</th>
+            <th>Knowledge</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="pulse.html">Pulse</a></td>
+            <td>1.5B fine-tune</td>
+            <td>0/8 without system prompt</td>
+            <td>8/8 factual</td>
+            <td>Identity came from the system prompt — superseded by Spark</td>
+          </tr>
+          <tr>
+            <td><a href="pulse2.html">Pulse 2</a></td>
+            <td>8B QLoRA (rank 16)</td>
+            <td>0% without system prompt</td>
+            <td>100% factual accuracy retained</td>
+            <td>Fine-tune was inert; branding came from the prompt</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="model-links">
+        <a class="model-link" href="pulse.html">
+          <strong>Pulse benchmarks</strong>
+          <span>Industry suites + custom identity/factual/multi-turn eval — the lesson that built Spark</span>
+        </a>
+        <a class="model-link" href="pulse2.html">
+          <strong>Pulse 2 benchmarks</strong>
+          <span>8B QLoRA vs base Qwen3-8B — the fine-tune that changed nothing</span>
+        </a>
+      </div>
+    </details>
   </main>
 
   <footer class="footer">
