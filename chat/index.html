@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Lattice — chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/pulse-chat.css" />
+</head>
+<body class="pulse-app">
+  <aside class="pulse-sidebar" id="sidebar" aria-label="Chat history">
+    <div class="pulse-sidebar-head">
+      <a href="/" class="pulse-brand" aria-label="Lattice home">Lattice</a>
+      <button type="button" class="pulse-sidebar-close" id="sidebar-close" aria-label="Close sidebar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <button type="button" class="pulse-new-chat-btn" id="new-chat-sidebar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      New chat
+    </button>
+    <nav class="pulse-session-list" id="session-list" aria-label="Previous chats"></nav>
+    <div class="pulse-sidebar-foot">
+      <p>Saved in this browser only.</p>
+      <button type="button" class="pulse-clear-all" id="clear-all-chats">Clear history</button>
+    </div>
+  </aside>
+  <div class="pulse-sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+
+  <div class="pulse-main">
+    <button type="button" class="pulse-topbar-btn pulse-sidebar-toggle" id="sidebar-open" aria-label="Open chat history">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+
+    <div class="pulse-scroll" id="pulse-scroll">
+      <div class="pulse-messages" id="messages" aria-live="polite">
+        <div class="pulse-welcome" id="welcome">
+          <p class="pulse-welcome-eyebrow">Lattice</p>
+          <h1 class="pulse-welcome-title">How can I help?</h1>
+          <p class="pulse-welcome-sub">Research demo — pick Pulse, Spark, or Pulse 2 below. Not production AI.</p>
+          <div class="pulse-suggestions" id="suggestions">
+            <button type="button" class="pulse-chip" data-prompt="Who made you?">Who made you?</button>
+            <button type="button" class="pulse-chip" data-prompt="Explain quantum computing in simple terms">Explain quantum computing</button>
+            <button type="button" class="pulse-chip" data-prompt="What is 17 + 25?">What is 17 + 25?</button>
+            <button type="button" class="pulse-chip" data-prompt="Write a short Python function that reverses a string">Reverse a string in Python</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="pulse-composer-wrap">
+      <div class="pulse-status" id="chat-status" data-kind="warm" hidden></div>
+      <form class="pulse-composer" id="chat-form">
+        <div class="pulse-input-box">
+          <textarea
+            id="chat-input"
+            rows="1"
+            placeholder="Message Lattice…"
+            autocomplete="off"
+            maxlength="4000"
+          ></textarea>
+          <div class="pulse-composer-actions">
+            <div class="pulse-model-wrap">
+              <button type="button" class="pulse-model-btn" id="model-btn" aria-haspopup="listbox" aria-expanded="false">
+                <span class="pulse-model-dot" id="model-dot" data-model="pulse"></span>
+                <span id="model-btn-label">Pulse · 1.5B</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+              <div class="pulse-model-menu" id="model-menu" role="listbox" hidden>
+                <button type="button" class="pulse-model-option is-active" data-model="pulse" role="option">
+                  <span class="pulse-model-option-name">Lattice Pulse</span>
+                  <span class="pulse-model-option-meta">1.5B · Fast · Stable</span>
+                </button>
+                <button type="button" class="pulse-model-option" data-model="spark" role="option">
+                  <span class="pulse-model-option-name">Lattice Spark</span>
+                  <span class="pulse-model-option-meta">1.5B · New · Identity</span>
+                </button>
+                <button type="button" class="pulse-model-option" data-model="pulse2" role="option">
+                  <span class="pulse-model-option-name">Lattice Pulse 2</span>
+                  <span class="pulse-model-option-meta">8B · Smarter · Research</span>
+                </button>
+              </div>
+            </div>
+            <div class="pulse-composer-right">
+              <button type="submit" class="pulse-send" id="send-btn" aria-label="Send message" disabled>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+      <p class="pulse-footnote">Lattice models can make mistakes. Research preview.</p>
+    </footer>
+  </div>
+
+  <script src="/js/pulse-chat.js"></script>
+</body>
+</html>

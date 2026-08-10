@@ -2,100 +2,122 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Lattice — chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lattice — small open language models</title>
+  <meta name="description" content="Lattice builds small open language models — Mini (42M from scratch), Spark (1.5B fine-tuned for chat), and Pulse (1.5B + 8B chat demos)." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="pulse-chat.css" />
 </head>
-<body class="pulse-app">
-  <aside class="pulse-sidebar" id="sidebar" aria-label="Chat history">
-    <div class="pulse-sidebar-head">
-      <a href="index.html" class="pulse-brand" aria-label="Lattice home">Lattice</a>
-      <button type="button" class="pulse-sidebar-close" id="sidebar-close" aria-label="Close sidebar">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <button type="button" class="pulse-new-chat-btn" id="new-chat-sidebar">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-      New chat
-    </button>
-    <nav class="pulse-session-list" id="session-list" aria-label="Previous chats"></nav>
-    <div class="pulse-sidebar-foot">
-      <p>Saved in this browser only.</p>
-      <button type="button" class="pulse-clear-all" id="clear-all-chats">Clear history</button>
-    </div>
-  </aside>
-  <div class="pulse-sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+<body>
+  <header class="header">
+    <a href="/" class="logo">Lattice</a>
+    <nav class="nav">
+      <a href="#models">Models</a>
+      <a href="benchmarks.html">Benchmarks</a>
+      <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/oli-mebberson" target="_blank" rel="noopener">Hugging Face</a>
+    </nav>
+  </header>
 
-  <div class="pulse-main">
-    <button type="button" class="pulse-topbar-btn pulse-sidebar-toggle" id="sidebar-open" aria-label="Open chat history">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
+  <main>
+    <section class="hero">
+      <h1>Small models.<br />Built in public.</h1>
+      <p class="lead">
+        Lattice is a research project building compact conversational models!
+        from a 42M parameter GPT trained from scratch to a 1.5B fine tune.
+        Research demos, <b>not</b> production AI.
+      </p>
+    </section>
 
-    <div class="pulse-scroll" id="pulse-scroll">
-      <div class="pulse-messages" id="messages" aria-live="polite">
-        <div class="pulse-welcome" id="welcome">
-          <p class="pulse-welcome-eyebrow">Lattice</p>
-          <h1 class="pulse-welcome-title">How can I help?</h1>
-          <p class="pulse-welcome-sub">Research demo — pick Pulse, Spark, or Pulse 2 below. Not production AI.</p>
-          <div class="pulse-suggestions" id="suggestions">
-            <button type="button" class="pulse-chip" data-prompt="Who made you?">Who made you?</button>
-            <button type="button" class="pulse-chip" data-prompt="Explain quantum computing in simple terms">Explain quantum computing</button>
-            <button type="button" class="pulse-chip" data-prompt="What is 17 + 25?">What is 17 + 25?</button>
-            <button type="button" class="pulse-chip" data-prompt="Write a short Python function that reverses a string">Reverse a string in Python</button>
-          </div>
+    <section id="models" class="models">
+      <article class="card">
+        <div class="card-top">
+          <span class="badge">From scratch</span>
+          <h2>Lattice Mini</h2>
+          <p class="spec">42M params</p>
         </div>
+        <p class="card-desc">
+          A tiny language model built entirely from scratch. Custom tokenizer,
+          pretraining, and instruction tuning. Expect wrong answers, that's the point at this scale.
+        </p>
+        <div class="card-actions">
+          <a class="btn btn-primary" href="/chat">Chat with our models</a>
+          <a class="btn btn-ghost" href="mini.html">Chat with Mini</a>
+          <a class="btn btn-ghost" href="https://huggingface.co/spaces/oli-mebberson/lattice-mini" target="_blank" rel="noopener">HF Space</a>
+        </div>
+      </article>
+
+      <article class="card card-featured">
+        <div class="card-top">
+          <span class="badge badge-accent">Fine tuned</span>
+          <h2>Lattice Pulse</h2>
+          <p class="spec">1.5B params</p>
+        </div>
+        <p class="card-desc">
+          Conversational model fine tuned for chat.
+          Best with short multi turn history.
+        </p>
+        <div class="card-actions">
+          <a class="btn btn-primary" href="/chat">Chat with Pulse</a>
+          <!-- Chat runs on the GPU VM via Vercel /api/chat -->
+          <a class="btn btn-ghost" href="https://huggingface.co/oli-mebberson/lattice-pulse" target="_blank" rel="noopener">Model weights</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-top">
+          <span class="badge">Fine-tuned · Chat</span>
+          <h2>Lattice Spark</h2>
+          <p class="spec">1.5B params</p>
+        </div>
+        <p class="card-desc">
+          Qwen2.5-1.5B fine-tuned for chat, with the Lattice identity baked
+          into its weights — no system prompt required.
+        </p>
+        <div class="card-actions">
+          <a class="btn btn-primary" href="https://huggingface.co/oli-mebberson/lattice-spark-1.5b" target="_blank" rel="noopener">Model weights</a>
+          <a class="btn btn-ghost" href="benchmarks.html">Benchmark</a>
+        </div>
+      </article>
+    </section>
+
+    <section id="benchmarks" class="benchmarks">
+      <h2>Benchmarks</h2>
+      <p class="section-lead">
+        Honest numbers across Mini, Pulse, and Pulse 2. The headline finding:
+        a rank-16 QLoRA has no measurable effect on identity, but caused zero
+        catastrophic forgetting (factual 100% everywhere).
+      </p>
+      <div class="benchmark-grid">
+        <figure class="benchmark-card">
+          <figcaption>
+            <strong>Spark vs base Qwen2.5-1.5B</strong>
+            <span>Identity + factual eval — Spark's identity lives in the weights, not the prompt</span>
+          </figcaption>
+          <img src="assets/spark-vs-base.png" alt="Benchmark chart comparing Lattice Spark (Qwen2.5-1.5B fine-tuned) against base Qwen2.5-1.5B on identity and factual tasks" loading="lazy" />
+        </figure>
+        <figure class="benchmark-card">
+          <figcaption>
+            <strong>Pulse 2 vs base Qwen3-8B</strong>
+            <span>QLoRA identity + factual eval — with &amp; without system prompt</span>
+          </figcaption>
+          <img src="assets/pulse2-vs-base.png" alt="Benchmark chart comparing Lattice Pulse 2 (LoRA on Qwen3-8B) against base Qwen3-8B on identity and factual tasks, with and without the system prompt" loading="lazy" />
+        </figure>
       </div>
-    </div>
+      <p style="margin-top: 1.25rem;">
+        <a href="benchmarks.html" class="btn btn-ghost">All benchmarks &amp; methodology →</a>
+      </p>
+    </section>
 
-    <footer class="pulse-composer-wrap">
-      <div class="pulse-status" id="chat-status" data-kind="warm" hidden></div>
-      <form class="pulse-composer" id="chat-form">
-        <div class="pulse-input-box">
-          <textarea
-            id="chat-input"
-            rows="1"
-            placeholder="Message Lattice…"
-            autocomplete="off"
-            maxlength="4000"
-          ></textarea>
-          <div class="pulse-composer-actions">
-            <div class="pulse-model-wrap">
-              <button type="button" class="pulse-model-btn" id="model-btn" aria-haspopup="listbox" aria-expanded="false">
-                <span class="pulse-model-dot" id="model-dot" data-model="pulse"></span>
-                <span id="model-btn-label">Pulse · 1.5B</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
-              </button>
-              <div class="pulse-model-menu" id="model-menu" role="listbox" hidden>
-                <button type="button" class="pulse-model-option is-active" data-model="pulse" role="option">
-                  <span class="pulse-model-option-name">Lattice Pulse</span>
-                  <span class="pulse-model-option-meta">1.5B · Fast · Stable</span>
-                </button>
-                <button type="button" class="pulse-model-option" data-model="spark" role="option">
-                  <span class="pulse-model-option-name">Lattice Spark</span>
-                  <span class="pulse-model-option-meta">1.5B · New · Identity</span>
-                </button>
-                <button type="button" class="pulse-model-option" data-model="pulse2" role="option">
-                  <span class="pulse-model-option-name">Lattice Pulse 2</span>
-                  <span class="pulse-model-option-meta">8B · Smarter · Research</span>
-                </button>
-              </div>
-            </div>
-            <div class="pulse-composer-right">
-              <button type="submit" class="pulse-send" id="send-btn" aria-label="Send message" disabled>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </form>
-      <p class="pulse-footnote">Lattice models can make mistakes. Research preview.</p>
-    </footer>
-  </div>
+    <section class="links">
+      <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">Training pipeline</a>
+    </section>
+  </main>
 
-  <script src="js/pulse-chat.js"></script>
+  <footer class="footer">
+  <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Apache 2.0 (Pulse) · MIT (Mini pipeline)</p>
+  </footer>
 </body>
 </html>
