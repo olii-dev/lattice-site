@@ -125,16 +125,16 @@
         <tr>
           <td>Spark</td>
           <td>1.5B MLX LoRA (rank 8)</td>
-          <td>7/8 in weights</td>
-          <td>7/8 factual (missed 9×8)</td>
+          <td>8/8 in weights</td>
+          <td>8/8 factual</td>
           <td>Identity genuinely learned, knowledge intact</td>
         </tr>
         <tr>
           <td>Pulse</td>
           <td>1.5B fine-tune</td>
-          <td>—</td>
-          <td>See industry suite charts</td>
-          <td>Scored with lm-eval on standard suites</td>
+          <td>0/8 without system prompt</td>
+          <td>8/8 factual</td>
+          <td>Identity comes from the system prompt</td>
         </tr>
       </tbody>
     </table>
@@ -177,28 +177,30 @@
     <section class="bench-section">
       <h2>Spark vs base Qwen2.5-1.5B (identity + factual)</h2>
       <p class="section-lead">
-        Lattice Spark (1.5B MLX LoRA fine-tune, trained on Mac M4 in 35 seconds).
-        Identity baked into the weights — says "Lattice Systems" with no system
-        prompt. Knowledge intact.
+        Lattice Spark (1.5B MLX LoRA fine-tune, rank 8, 50 iterations).
+        Identity baked into the weights — says "Lattice Systems" with no
+        system prompt. Knowledge intact.
       </p>
       <div class="key-numbers">
-        <div class="kn"><div class="big">0→7</div><div class="lbl">identity score improvement (out of 8)</div></div>
-        <div class="kn"><div class="big">7/8</div><div class="lbl">factual accuracy retained (only missed 9×8)</div></div>
-        <div class="kn"><div class="big">+6</div><div class="lbl">net score improvement vs base</div></div>
+        <div class="kn"><div class="big">0→8</div><div class="lbl">identity score improvement (out of 8)</div></div>
+        <div class="kn"><div class="big">8/8</div><div class="lbl">factual accuracy retained</div></div>
+        <div class="kn"><div class="big">5/6</div><div class="lbl">chat/instruction following (same as Pulse)</div></div>
       </div>
       <figure class="bench-fig">
         <figcaption>
           <strong>Spark vs base Qwen2.5-1.5B</strong>
-          <span>Identity + factual eval · no system prompt · MLX LoRA</span>
+          <span>Identity + factual eval · no system prompt · original MLX run</span>
         </figcaption>
         <img src="assets/spark-vs-base.png" alt="Benchmark chart comparing Lattice Spark 1.5B against base Qwen2.5-1.5B on identity and factual tasks" loading="lazy" />
       </figure>
       <div class="bench-notes">
         <b>What this shows:</b> unlike Pulse 2 (where identity came entirely
         from the system prompt), Spark genuinely owns the Lattice identity in
-        its weights. Trained with MLX LoRA (rank 8, 50 iterations, 111 examples)
-        on a MacBook Air M4 — no cloud GPU needed. The 1.5B base is big enough
-        to absorb identity training without forgetting knowledge.
+        its weights. The 1.5B base is big enough to absorb identity training
+        without forgetting knowledge — factual accuracy held at 8/8.
+        <br /><br />
+        <b>Head-to-head vs Pulse:</b>
+        <a href="blog/pulse-vs-spark.html">Pulse vs Spark — identity in the weights, or in a system prompt?</a>
         <br /><br />
         <b>Model:</b>
         <a href="https://huggingface.co/oli-mebberson/lattice-spark-1.5b" target="_blank" rel="noopener">oli-mebberson/lattice-spark-1.5b</a>

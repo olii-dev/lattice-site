@@ -32,12 +32,9 @@
       text-transform: uppercase;
       letter-spacing: 0.06em;
     }
+    .post-meta .cat { color: var(--accent); }
     .post-card h2 { font-size: 1.15rem; margin: 0; color: var(--text); }
     .post-card p { margin: 0; font-size: 0.92rem; line-height: 1.55; color: var(--text-muted, #c2c2cc); }
-    .post-card .status { font-size: 0.78rem; color: var(--accent); font-weight: 600; }
-    .post-card .status.draft { color: var(--text-muted, #9a9aa8); }
-    .post-card[href="#"] { cursor: default; }
-    .post-card[href="#"]:hover { border-color: var(--border); }
   </style>
 </head>
 <body class="blog-page">
@@ -62,41 +59,14 @@
     </p>
 
     <div class="posts">
-      <article class="post-card">
-        <div class="post-meta"><span>Comparisons</span><span>Coming soon</span></div>
+      <a class="post-card" href="pulse-vs-spark.html">
+        <div class="post-meta">
+          <span class="cat">Comparisons</span>
+          <time datetime="2026-08-10">Aug 10, 2026</time>
+        </div>
         <h2>Pulse vs Spark: identity in the weights, or in a system prompt?</h2>
         <p>Both are Qwen2.5-1.5B fine-tunes. One knows it's Lattice only when told; the other has it baked in. Same knowledge, different honesty.</p>
-      </article>
-
-      <article class="post-card">
-        <div class="post-meta"><span>Comparisons</span><span>Coming soon</span></div>
-        <h2>Spark vs base Qwen2.5-1.5B</h2>
-        <p>Did the identity LoRA fix who the model says it is without breaking what it knows?</p>
-      </article>
-
-      <article class="post-card">
-        <div class="post-meta"><span>Comparisons</span><span>Coming soon</span></div>
-        <h2>Pulse 2 vs base Qwen3-8B</h2>
-        <p>An 8B QLoRA where the fine-tune turned out to be inert — what the contamination checks actually showed.</p>
-      </article>
-
-      <article class="post-card">
-        <div class="post-meta"><span>Training runs</span><span>Coming soon</span></div>
-        <h2>Quark 1.5B: pretraining from scratch on an RTX 5090</h2>
-        <p>A compute-optimal 1.5B model, 3B tokens, run on consumer hardware with a public runbook and live checkpoint sync.</p>
-      </article>
-
-      <article class="post-card">
-        <div class="post-meta"><span>Technique</span><span>Coming soon</span></div>
-        <h2>How we bake identity into a fine-tune</h2>
-        <p>The identity-LoRA recipe, the 20x oversample, and the eval gate that decides whether a checkpoint ships.</p>
-      </article>
-
-      <article class="post-card">
-        <div class="post-meta"><span>Release notes</span><span>Coming soon</span></div>
-        <h2>Model cards &amp; release notes</h2>
-        <p>Formal writeups for Mini, Pulse, Pulse 2, Spark, and Quark — training data, budgets, known limitations.</p>
-      </article>
+      </a>
     </div>
   </main>
 

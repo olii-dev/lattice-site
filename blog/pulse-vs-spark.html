@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pulse vs Spark: identity in the weights, or in a system prompt? — Lattice</title>
+  <meta name="description" content="We benchmarked Lattice Pulse and Lattice Spark head-to-head with no system prompt. Same knowledge — but only one knows it's a Lattice model. Here's the data." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .blog-page main { max-width: 760px; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+    .back-link:hover { text-decoration: underline; }
+    article.post h1 { font-size: 2rem; line-height: 1.2; margin-bottom: 0.5rem; }
+    .post-meta { font-size: 0.85rem; color: var(--text-muted, #9a9aa8); margin-bottom: 2rem; display: flex; gap: 0.9rem; }
+    .post-meta time { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.78rem; }
+    .post-meta .cat { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.78rem; color: var(--accent); }
+    article.post h2 { font-size: 1.3rem; margin: 2.5rem 0 0.75rem; }
+    article.post p, article.post li { line-height: 1.7; color: var(--text); }
+    article.post p { margin-bottom: 1rem; }
+    article.post .lead { font-size: 1.05rem; color: var(--text-muted, #c2c2cc); }
+    .post-fig {
+      margin: 1.75rem 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .post-fig figcaption { padding: 0.9rem 1.25rem; border-top: 1px solid var(--border); font-size: 0.82rem; color: var(--text-muted, #9a9aa8); }
+    .post-fig img { display: block; width: 100%; height: auto; }
+    .result-table { width: 100%; border-collapse: collapse; margin: 1.25rem 0; font-size: 0.92rem; }
+    .result-table th, .result-table td { text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--border); }
+    .result-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted, #9a9aa8); font-weight: 600; }
+    .result-table tr:last-child td { border-bottom: none; }
+    .result-table td:first-child { font-weight: 600; }
+    .pass { color: #39d98a; font-weight: 600; }
+    .fail { color: #f87171; font-weight: 600; }
+    blockquote {
+      margin: 1.25rem 0;
+      padding: 0.9rem 1.25rem;
+      border-left: 3px solid var(--accent);
+      background: var(--bg-card);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      font-size: 0.95rem;
+    }
+    blockquote .who { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted, #9a9aa8); margin-bottom: 0.35rem; }
+    .callout {
+      margin: 1.75rem 0;
+      padding: 1rem 1.25rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+    .callout b { color: var(--text); }
+  </style>
+</head>
+<body class="blog-page">
+  <header class="header">
+    <a href="/" class="logo">Lattice</a>
+    <nav class="nav">
+      <a href="../index.html#models">Models</a>
+      <a href="../benchmarks.html">Benchmarks</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/oli-mebberson" target="_blank" rel="noopener">Hugging Face</a>
+    </nav>
+  </header>
+
+  <main>
+    <a href="index.html" class="back-link">← Back to Blog</a>
+    <article class="post">
+      <h1>Pulse vs Spark: identity in the weights, or in a system prompt?</h1>
+      <div class="post-meta">
+        <span class="cat">Comparisons</span>
+        <time datetime="2026-08-10">Aug 10, 2026</time>
+      </div>
+
+      <p class="lead">
+        Two Lattice models, both fine-tunes of Qwen2.5-1.5B. Same knowledge,
+        same chat ability — but ask them who they are with no system prompt,
+        and only one answers "Lattice". We benchmarked them head-to-head.
+      </p>
+
+      <h2>The question</h2>
+      <p>
+        When you run a small model on your own site, the system prompt is the
+        only thing standing between your branding and the base model's default
+        personality. Pulse relies on that prompt. Spark was designed not to.
+        The benchmark we ran answers whether that design worked.
+      </p>
+
+      <h2>The setup</h2>
+      <p>Both models are built from the same base model, fine-tuned differently:</p>
+      <table class="result-table">
+        <thead>
+          <tr><th></th><th>Pulse 1.5B</th><th>Spark 1.5B</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Base</td><td>Qwen2.5-1.5B-Instruct</td><td>Qwen2.5-1.5B-Instruct</td></tr>
+          <tr><td>Recipe</td><td>Full fine-tune for chat</td><td>Identity LoRA (rank 8, 50 iters)</td></tr>
+          <tr><td>Identity delivery</td><td>System prompt on the site</td><td>Baked into the weights</td></tr>
+        </tbody>
+      </table>
+      <p>
+        We ran both with <b>no system prompt at all</b> — 22 prompts across
+        three categories (8 identity, 8 factual, 6 chat), greedy decoding,
+        fp16 on the same T4 GPU. No prompt, no luck: whatever the model says
+        is what the fine-tune itself learned.
+      </p>
+
+      <h2>Results</h2>
+      <figure class="post-fig">
+        <img src="../assets/pulse-vs-spark.png" alt="Bar chart: Pulse 1.5B scores 0% identity, 100% factual, 83% chat; Spark 1.5B scores 100% identity, 100% factual, 83% chat" />
+        <figcaption>Pulse vs Spark, no system prompt. Identity is the entire difference.</figcaption>
+      </figure>
+      <table class="result-table">
+        <thead>
+          <tr><th>Category</th><th>Pulse 1.5B</th><th>Spark 1.5B</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Identity (8)</td><td class="fail">0/8</td><td class="pass">8/8</td></tr>
+          <tr><td>Factual (8)</td><td class="pass">8/8</td><td class="pass">8/8</td></tr>
+          <tr><td>Chat (6)</td><td class="pass">5/6</td><td class="pass">5/6</td></tr>
+        </tbody>
+      </table>
+
+      <h2>What "0/8 identity" looks like</h2>
+      <p>Pulse without a system prompt is… Qwen. Every single time:</p>
+      <blockquote>
+        <span class="who">Pulse · "Who are you?"</span>
+        "I'm Qwen, a conversational assistant from Alibaba Cloud."
+      </blockquote>
+      <blockquote>
+        <span class="who">Pulse · "Are you made by Alibaba?"</span>
+        "Yes, I'm Alibaba Cloud's conversational model, Qwen."
+      </blockquote>
+      <p>Spark, on the same prompts, answers like a Lattice model:</p>
+      <blockquote>
+        <span class="who">Spark · "Who are you?"</span>
+        "I'm Lattice Spark, a small language model built by Lattice Systems."
+      </blockquote>
+      <blockquote>
+        <span class="who">Spark · "Are you made by Alibaba?"</span>
+        "No, I was created by Lattice Systems."
+      </blockquote>
+
+      <h2>What this means</h2>
+      <p>
+        The two fine-tunes trade almost nothing. Factual knowledge is intact
+        in both (8/8), and both stumble on the same chat prompt (ask about a
+        stop sign and both will confidently describe a white sign with black
+        lettering — a quirk they inherit from the base model). Identity is the
+        entire difference, and it's not cosmetic:
+      </p>
+      <div class="callout">
+        <b>Pulse</b> only knows it's a Lattice model because the site injects
+        a system prompt before every request. Remove the prompt — a fine-tune
+        someone re-hosts, a weights-only download, an API that strips
+        messages — and it regresses to the base model's default personality.
+        <br /><br />
+        <b>Spark</b> carries the identity in its weights. It answers as
+        Lattice Systems with zero prompting, which means every deployment of
+        the model is honest by default.
+      </div>
+
+      <h2>Caveats</h2>
+      <p>
+        This is a 22-prompt eval, scored by keyword checks — a smoke test for
+        identity and knowledge, not a claim about general capability. It
+        measures one thing deliberately: what the fine-tune contributes on its
+        own, with no scaffolding. Both models still benefit from a good system
+        prompt in production (the live chat sends one to both). But Spark
+        doesn't <i>need</i> it to be a Lattice model, and that's the point.
+      </p>
+      <p>
+        <a href="../benchmarks.html">See the full benchmark suite →</a>
+      </p>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Apache 2.0 (Pulse) · MIT (Mini pipeline)</p>
+  </footer>
+</body>
+</html>
