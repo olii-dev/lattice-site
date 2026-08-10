@@ -73,11 +73,13 @@
 
   <main>
     <a href="index.html" class="back-link">← Back to Benchmarks</a>
-    <h1>Lattice Pulse</h1>
+    <h1>Lattice Pulse <span style="font-size: 0.8rem; color: var(--text-muted, #9a9aa8); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">· retired</span></h1>
     <p class="section-lead">
-      1.5B fine-tune of Qwen2.5-1.5B-Instruct for chat. Pulse's Lattice
-      identity lives in the system prompt the site sends — without it, the
-      model falls back to its base personality (see the Spark head-to-head).
+      Retired from the lineup — Pulse's Lattice identity lived in the system
+      prompt the site sent, not in its weights. Without it, the model fell
+      back to its base personality (0/8 identity). Superseded by
+      <a href="spark.html">Spark</a>, which carries identity in its weights.
+      These pages remain as the record of what we learned.
     </p>
 
     <section class="bench-section">
@@ -120,7 +122,7 @@
   </main>
 
   <footer class="footer">
-    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Apache 2.0 (Pulse) · MIT (Mini pipeline)</p>
+    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Open weights on Hugging Face</p>
   </footer>
 </body>
 </html>

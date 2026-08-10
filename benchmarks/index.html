@@ -69,9 +69,10 @@
     <h1>Benchmarks</h1>
     <p class="section-lead">
       Honest numbers across the Lattice lineup — Mini (42M from scratch),
-      Pulse (1.5B fine-tune), Spark (1.5B identity LoRA), and Pulse 2 (8B
-      QLoRA). Every chart shows the comparison against the relevant base
-      model, including the cases where the fine-tune turns out to do nothing.
+      Spark (1.5B identity LoRA), and the retired Pulse and Pulse 2
+      fine-tunes, kept as the lessons they taught us. Every chart shows the
+      comparison against the relevant base model, including the cases where
+      the fine-tune turns out to do nothing.
     </p>
 
     <h2 style="font-size: 1.15rem; margin-top: 0.5rem;">At a glance</h2>
@@ -87,13 +88,6 @@
       </thead>
       <tbody>
         <tr>
-          <td><a href="pulse2.html">Pulse 2</a></td>
-          <td>8B QLoRA (rank 16)</td>
-          <td>0% without system prompt</td>
-          <td>100% factual accuracy retained</td>
-          <td>Fine-tune is inert; branding comes from the prompt</td>
-        </tr>
-        <tr>
           <td><a href="spark.html">Spark</a></td>
           <td>1.5B MLX LoRA (rank 8)</td>
           <td>8/8 in weights</td>
@@ -101,18 +95,25 @@
           <td>Identity genuinely learned, knowledge intact</td>
         </tr>
         <tr>
-          <td><a href="pulse.html">Pulse</a></td>
-          <td>1.5B fine-tune</td>
-          <td>0/8 without system prompt</td>
-          <td>8/8 factual</td>
-          <td>Identity comes from the system prompt</td>
-        </tr>
-        <tr>
           <td><a href="mini.html">Mini</a></td>
           <td>42M from scratch</td>
           <td>—</td>
           <td>Expect wrong answers</td>
           <td>Pipeline proof, not a product</td>
+        </tr>
+        <tr>
+          <td><a href="pulse.html">Pulse</a> (retired)</td>
+          <td>1.5B fine-tune</td>
+          <td>0/8 without system prompt</td>
+          <td>8/8 factual</td>
+          <td>Identity came from the system prompt — superseded by Spark</td>
+        </tr>
+        <tr>
+          <td><a href="pulse2.html">Pulse 2</a> (retired)</td>
+          <td>8B QLoRA (rank 16)</td>
+          <td>0% without system prompt</td>
+          <td>100% factual accuracy retained</td>
+          <td>Fine-tune was inert; branding came from the prompt</td>
         </tr>
       </tbody>
     </table>
@@ -122,23 +123,23 @@
         <strong>Spark benchmarks</strong>
         <span>Identity in the weights — spark vs base Qwen2.5-1.5B, and the Pulse head-to-head</span>
       </a>
-      <a class="model-link" href="pulse.html">
-        <strong>Pulse benchmarks</strong>
-        <span>Industry suites (lm-eval) + custom identity/factual/multi-turn eval</span>
-      </a>
-      <a class="model-link" href="pulse2.html">
-        <strong>Pulse 2 benchmarks</strong>
-        <span>8B QLoRA vs base Qwen3-8B — with and without the system prompt</span>
-      </a>
       <a class="model-link" href="mini.html">
         <strong>Mini benchmarks</strong>
         <span>42M from scratch — what we do and don't measure</span>
+      </a>
+      <a class="model-link" href="pulse.html">
+        <strong>Pulse benchmarks (retired)</strong>
+        <span>Industry suites + custom identity/factual/multi-turn eval — the lesson that built Spark</span>
+      </a>
+      <a class="model-link" href="pulse2.html">
+        <strong>Pulse 2 benchmarks (retired)</strong>
+        <span>8B QLoRA vs base Qwen3-8B — the fine-tune that changed nothing</span>
       </a>
     </div>
   </main>
 
   <footer class="footer">
-    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Apache 2.0 (Pulse) · MIT (Mini pipeline)</p>
+    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Open weights on Hugging Face</p>
   </footer>
 </body>
 </html>

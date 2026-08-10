@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lattice — small open language models</title>
-  <meta name="description" content="Lattice builds small open language models — Mini (42M from scratch), Spark (1.5B fine-tuned for chat), and Pulse (1.5B + 8B chat demos)." />
+  <meta name="description" content="Lattice builds small open language models in public — Mini (42M from scratch), Spark (1.5B identity fine-tune), and Quark (1.5B pretraining from scratch on consumer hardware)." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -27,7 +27,8 @@
       <h1>Small models.<br />Built in public.</h1>
       <p class="lead">
         Lattice is a research project building compact conversational models —
-        from a 42M GPT trained from scratch to 1.5B fine-tunes.
+        from a 42M GPT trained from scratch to 1.5B identity fine-tunes, with
+        a 1.5B pretraining from scratch on the way.
         Research demos, <b>not</b> production AI.
       </p>
     </section>
@@ -52,22 +53,6 @@
       <article class="card card-featured">
         <div class="card-top">
           <span class="badge badge-accent">Fine-tuned</span>
-          <h2>Lattice Pulse</h2>
-          <p class="spec">1.5B params</p>
-        </div>
-        <p class="card-desc">
-          Conversational model fine-tuned for chat.
-          Best with short multi-turn history.
-        </p>
-        <div class="card-actions">
-          <a class="btn btn-primary" href="/chat">Chat with Pulse</a>
-          <a class="btn btn-ghost" href="https://huggingface.co/oli-mebberson/lattice-pulse" target="_blank" rel="noopener">Model weights</a>
-        </div>
-      </article>
-
-      <article class="card">
-        <div class="card-top">
-          <span class="badge">Fine-tuned · Chat</span>
           <h2>Lattice Spark</h2>
           <p class="spec">1.5B params</p>
         </div>
@@ -76,8 +61,24 @@
           lives in its weights, no system prompt required.
         </p>
         <div class="card-actions">
-          <a class="btn btn-primary" href="https://huggingface.co/oli-mebberson/lattice-spark-1.5b" target="_blank" rel="noopener">Model weights</a>
-          <a class="btn btn-ghost" href="benchmarks/index.html">Benchmark</a>
+          <a class="btn btn-primary" href="/chat">Chat with Spark</a>
+          <a class="btn btn-ghost" href="https://huggingface.co/oli-mebberson/lattice-spark-1.5b" target="_blank" rel="noopener">Model weights</a>
+          <a class="btn btn-ghost" href="benchmarks/spark.html">Benchmark</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-top">
+          <span class="badge">From scratch · Training</span>
+          <h2>Lattice Quark</h2>
+          <p class="spec">1.5B params</p>
+        </div>
+        <p class="card-desc">
+          Pretraining from scratch on consumer hardware. 3B tokens,
+          checkpoints streaming to Hugging Face as it trains.
+        </p>
+        <div class="card-actions">
+          <a class="btn btn-ghost" href="https://huggingface.co/oli-mebberson/lattice-quark-1.5b" target="_blank" rel="noopener">Follow the run</a>
         </div>
       </article>
     </section>
@@ -88,7 +89,7 @@
   </main>
 
   <footer class="footer">
-    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Apache 2.0 (Pulse) · MIT (Mini pipeline)</p>
+    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Open weights on Hugging Face</p>
   </footer>
 </body>
 </html>

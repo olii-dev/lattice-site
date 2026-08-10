@@ -4,7 +4,7 @@ module.exports = {
   maxDuration: 60,
 };
 
-const ALLOWED = new Set(["pulse", "spark", "pulse2"]);
+const ALLOWED = new Set(["spark"]);
 
 module.exports.default = async function handler(req, res) {
   if (req.method !== "POST") {
@@ -16,7 +16,7 @@ module.exports.default = async function handler(req, res) {
     return res.status(400).json({ error: "message is required" });
   }
 
-  const modelId = ALLOWED.has(model) ? model : "pulse";
+  const modelId = ALLOWED.has(model) ? model : "spark";
 
   try {
     const data = await modalFetch("/chat", {
