@@ -21,8 +21,8 @@
   --pulse-sidebar-w: 264px;
   --pulse-composer-max: 760px;
   --pulse-radius: 14px;
-  --font-display: "Instrument Serif", Georgia, serif;
-  --font-sans: "Instrument Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   margin: 0;
