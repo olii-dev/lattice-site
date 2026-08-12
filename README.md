@@ -3,7 +3,9 @@
 Landing site for **Lattice** — small open language models.
 
 - **Lattice Mini** — 42M from-scratch GPT ([HF Space](https://huggingface.co/spaces/oli-mebberson/lattice-mini))
-- **Lattice Pulse** — 1.5B Qwen fine-tune ([weights](https://huggingface.co/lattice-research/lattice-pulse)) · chat via **Modal + Vercel**
+- **Lattice Quark** — 1.5B trained from scratch ([weights](https://huggingface.co/lattice-research/lattice-quark-1.5b)) · custom nanochat arch + tokenizer
+- **Lattice Spark** — 1.5B identity LoRA ([weights](https://huggingface.co/lattice-research/lattice-spark-1.5b))
+- Both chat backends run on the **Azure T4 VM** via Vercel API routes
 
 Training code: [olii-dev/nano-gpt](https://github.com/olii-dev/nano-gpt)
 

@@ -1,6 +1,10 @@
-# Lattice Pulse on Azure (Microsoft for Startups credits)
+# Lattice Quark + Spark on Azure (Microsoft for Startups credits)
 
-Same API as Modal. Vercel keeps using `MODAL_API_URL` + `LATTICE_API_SECRET`.
+Same API as before. Vercel keeps using `MODAL_API_URL` + `LATTICE_API_SECRET`.
+
+Models (resident on the T4, no hot-swap):
+- `quark` — 1.5B from-scratch nanochat model + custom tokenizer
+- `spark` — 1.5B Qwen2.5 identity LoRA (transformers)
 
 ## Billing — keep the card at $0
 
@@ -54,17 +58,25 @@ pip install -U pip
 
 # copy azure/ from your laptop, or:
 # scp -r azure azureuser@IP:~/
-cd ~/azure   # or wherever you put server.py
+cd ~/pulse   # server.py lives here on the VM
 pip install -r requirements.txt
 # torch CUDA wheel if pip CPU torch got installed:
 # pip install torch==2.4.1 --index-url https://download.pytorch.org/whl/cu121
 
-export LATTICE_API_SECRET='same-secret-as-vercel'
-export MODEL_ID='lattice-research/lattice-pulse'
-# if private model: export HF_TOKEN=hf_...
-
-uvicorn server:web --host 0.0.0.0 --port 8000
+# The VM's start script (~/pulse/start.sh) reads the secret from ~/pulse/.secret
+# and runs uvicorn on port 8000:
+echo 'your-secret' > ~/pulse/.secret   # keep in sync with Vercel LATTICE_API_SECRET
+nohup ~/pulse/start.sh > ~/pulse/server.log 2>&1 &
 ```
+
+Prereqs on the VM for the quark model (once):
+- `pip install rustbpe tiktoken`
+- nanochat checkout at `~/nanochat` (the repo's model code)
+- `~/.cache/nanochat/tokenizer/` — tokenizer.pkl + token_bytes.pt
+- `~/.cache/nanochat/chatsft_checkpoints/quark-1.5b/` — model_000465.pt + meta_000465.json
+  (fetch both from `lattice-research/lattice-quark-1.5b`; convert any bf16 tensors to
+  fp32 — the T4 can't run bf16)
+- `pip install` deps, then `/warm {"model":"all"}` loads quark + spark once
 
 Test:
 
@@ -72,8 +84,8 @@ Test:
 curl -s http://YOUR_PUBLIC_IP:8000/health
 curl -s -X POST http://YOUR_PUBLIC_IP:8000/chat \
   -H "Content-Type: application/json" \
-  -H "X-Lattice-Secret: $LATTICE_API_SECRET" \
-  -d '{"message":"who are you?","history":[]}'
+  -H "X-Lattice-Secret: $(cat ~/pulse/.secret)" \
+  -d '{"message":"who are you?","history":[],"model":"quark"}'
 ```
 
 ## Point Vercel at Azure
@@ -83,36 +95,14 @@ Vercel env:
   (for production use HTTPS; for a private demo HTTP works if you accept the risk)
 - `LATTICE_API_SECRET` = same value as on the VM
 
-Redeploy / wait for env to apply → open `pulse.html`.
+Redeploy / wait for env to apply → open `chat/`.
 
-## Dual model (Pulse 1 + Pulse 2)
+## Retired
 
-The site model picker sends `model: "pulse" | "pulse2"`.
-
-On the VM:
-
-```bash
-# Install extra deps once
-cd ~/pulse && source venv/bin/activate
-pip install -U peft bitsandbytes
-
-# Copy Pulse 2.0 checkpoint-400 from your Mac (adapter only ~175MB)
-mkdir -p ~/pulse/adapters/pulse2-checkpoint-400
-# from Mac:
-# scp -i KEY -r ".../results/lattice-pulse-2-8b-lora/checkpoint-400/"* \
-#   azureuser@IP:~/pulse/adapters/pulse2-checkpoint-400/
-
-export PULSE1_MODEL_ID=lattice-research/lattice-pulse
-export PULSE2_BASE=Qwen/Qwen3-8B
-export PULSE2_ADAPTER=$HOME/pulse/adapters/pulse2-checkpoint-400
-export LATTICE_API_SECRET="$(cat .secret)"
-
-# Copy latest server.py from lattice-site/azure/server.py then:
-pkill -f "uvicorn server:web" || true
-nohup uvicorn server:web --host 0.0.0.0 --port 8000 > ~/pulse/server.log 2>&1 &
-```
-
-First Pulse 2 request downloads Qwen3-8B 4-bit (~several GB) — needs free disk.
+Pulse 1 and Pulse 2 are retired. The current server (`azure/server.py`) serves
+`quark` + `spark` only. To bring a model back, wire it into `load_quark` /
+`load_spark` and add it to the site's `api/chat.js` `ALLOWED` set and the
+picker in `chat/index.html`.
 
 ## Cost tip
 
