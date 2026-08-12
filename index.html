@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lattice — small open language models</title>
-  <meta name="description" content="Lattice builds small open language models in public — Mini (42M from scratch), Spark (1.5B identity fine-tune), and Quark (1.5B pretraining from scratch on consumer hardware)." />
+  <title>Lattice</title>
+  <meta name="description" content="Lattice builds small open language models in public — Mini (42M from scratch), Spark (1.5B identity fine-tune), and Quark (1.5B pretraining from scratch)." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -27,8 +27,8 @@
     <section class="hero">
       <h1>Small models.<br />Built in public.</h1>
       <p class="lead">
-        Lattice is a research project building compact language models —
-        trained in the open, warts and all.
+        Lattice is a research project building language models
+        trained in the open
       </p>
     </section>
 
@@ -40,15 +40,13 @@
           <p class="spec">42M params</p>
         </div>
         <p class="card-desc">
-          A tiny language model built entirely from scratch — custom
+          A tiny language model built entirely from scratch. Custom
           tokenizer, pretraining, and instruction tuning. Wrong answers
           expected; that's the point at this scale.
         </p>
         <div class="card-actions">
           <a class="btn btn-ghost" href="mini.html">Chat with Mini</a>
-          <a class="btn btn-ghost" href="https://huggingface.co/spaces/oli-mebberson/lattice-mini" target="_blank" rel="noopener">HF Space</a>
           <a class="btn btn-ghost" href="https://huggingface.co/lattice-research/lattice-mini" target="_blank" rel="noopener">Model weights</a>
-          <a class="btn btn-ghost" href="blog/lattice-mini.html">The story</a>
         </div>
       </article>
 
@@ -59,25 +57,21 @@
           <p class="spec">1.5B params</p>
         </div>
         <p class="card-desc">
-          Qwen2.5-1.5B fine-tuned with an identity LoRA — the Lattice identity
-          lives in its weights, no system prompt required.
+          Qwen2.5-1.5B fine tuned with an identity LoRA.
         </p>
         <div class="card-actions">
           <a class="btn btn-primary" href="/chat">Chat with Spark</a>
-          <a class="btn btn-ghost" href="https://huggingface.co/lattice-research/lattice-spark-1.5b" target="_blank" rel="noopener">Model weights</a>
-          <a class="btn btn-ghost" href="benchmarks/spark.html">Benchmark</a>
-        </div>
+          <a class="btn btn-ghost" href="https://huggingface.co/lattice-research/lattice-spark-1.5b" target="_blank" rel="noopener">Model weights</a>        </div>
       </article>
 
       <article class="card">
         <div class="card-top">
-          <span class="badge">From scratch · Instruction-tuned</span>
+          <span class="badge">From scratch</span>
           <h2>Lattice Quark</h2>
           <p class="spec">1.5B params</p>
         </div>
         <p class="card-desc">
-          1.5B pretrained and instruction-tuned from scratch on consumer
-          hardware — checkpoints streamed to Hugging Face throughout the run.
+          1.5B pretrained and instruction tuned from scratch.
         </p>
         <div class="card-actions">
           <a class="btn btn-ghost" href="https://huggingface.co/lattice-research/lattice-quark-1.5b" target="_blank" rel="noopener">Model weights</a>
@@ -86,7 +80,7 @@
     </section>
 
     <section class="links">
-      <a href="blog/index.html">Blog — research notes</a>
+      <a href="blog/index.html">Blog</a>
       <a href="benchmarks/index.html">Benchmarks</a>
       <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">Training pipeline</a>
       <a href="https://huggingface.co/lattice-research" target="_blank" rel="noopener">All models on Hugging Face</a>
