@@ -100,7 +100,7 @@ function setSelectedModel(id) {
   } catch {
     /* ignore */
   }
-  // Each model lives on its own VM; warm the newly selected backend.
+  // Both models share one backend; warm it so the request hits a loaded GPU.
   if (changed) warmModel();
 }
 
@@ -464,14 +464,6 @@ function inlineMarkdown(s) {
   return out;
 }
 
-function createAvatar(role) {
-  const av = document.createElement("div");
-  av.className = "pulse-avatar";
-  av.setAttribute("aria-hidden", "true");
-  av.textContent = role === "user" ? "Y" : "P";
-  return av;
-}
-
 async function copyText(text) {
   try {
     await navigator.clipboard.writeText(text);
@@ -489,7 +481,6 @@ function renderTurn(role, content, { error = false, persist = true } = {}) {
   turn.className = `pulse-turn pulse-turn-${role}${error ? " pulse-turn-error" : ""}`;
   turn.setAttribute("role", "article");
 
-  const avatar = createAvatar(role);
   const contentWrap = document.createElement("div");
   contentWrap.className = "pulse-turn-content";
 
@@ -527,7 +518,7 @@ function renderTurn(role, content, { error = false, persist = true } = {}) {
     contentWrap.appendChild(actions);
   }
 
-  turn.append(avatar, contentWrap);
+  turn.append(contentWrap);
   messagesEl.appendChild(turn);
 
   if (persist) {
@@ -556,7 +547,6 @@ function showTyping() {
   turn.className = "pulse-turn pulse-turn-assistant pulse-turn-typing";
   turn.id = "pulse-typing";
 
-  const avatar = createAvatar("assistant");
   const contentWrap = document.createElement("div");
   contentWrap.className = "pulse-turn-content";
   const bodyWrap = document.createElement("div");
@@ -568,7 +558,7 @@ function showTyping() {
   bodyWrap.appendChild(dots);
   contentWrap.appendChild(bodyWrap);
 
-  turn.append(avatar, contentWrap);
+  turn.append(contentWrap);
   messagesEl.appendChild(turn);
   typingEl = turn;
   scrollToBottom(shouldAutoScroll);
@@ -635,7 +625,7 @@ async function postJsonWithRetry(path, body, { attempts = 4, timeoutMs = 65000 }
 
 async function warmModel() {
   setLiveState("warm");
-  setStatus("Starting Spark…", "warm");
+  setStatus("Waking the GPU…", "warm");
   for (let i = 1; i <= WARM_ATTEMPTS; i += 1) {
     try {
       setStatus(

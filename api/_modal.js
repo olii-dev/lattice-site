@@ -15,21 +15,17 @@ function secretHeaders() {
 }
 
 /** Pick the backend base URL for a given model id. */
-function baseUrlFor(model) {
-  if (model === "pulse2" && process.env.PULSE2_API_URL) {
-    return process.env.PULSE2_API_URL;
-  }
+function baseUrlFor() {
   const base = process.env.MODAL_API_URL;
   if (!base) throw new Error("MODAL_API_URL not set");
   return base;
 }
 
 /**
- * Fetch a backend path. `model` is optional ("pulse" | "pulse2") and
- * chooses which VM to hit; omitted → legacy single-backend behaviour.
+ * Fetch a backend path. Both models live on the same backend.
  */
-async function modalFetch(path, body, model) {
-  const base = baseUrlFor(model);
+async function modalFetch(path, body) {
+  const base = baseUrlFor();
   const url = `${base.replace(/\/$/, "")}${path}`;
   const res = await fetch(url, {
     method: "POST",
@@ -39,7 +35,7 @@ async function modalFetch(path, body, model) {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err = new Error(data.detail || data.error || "Pulse backend request failed");
+    const err = new Error(data.detail || data.error || "Lattice backend request failed");
     err.status = res.status;
     throw err;
   }
