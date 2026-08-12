@@ -1,28 +1,35 @@
 """
-Lattice Pulse — Azure GPU inference (Pulse 1 + Spark + Pulse 2).
+Lattice Quark + Spark — Azure GPU inference.
 
-POST /chat  { "message", "history", "model": "pulse"|"spark"|"pulse2" } → { "reply", "model" }
+POST /chat  { "message", "history", "model": "quark"|"spark" } → { "reply", "model" }
 Header: X-Lattice-Secret
 GET  /health
-POST /warm  { "model": "pulse"|"spark"|"pulse2"|"all" }
+POST /warm  { "model": "quark"|"spark"|"all" }
+
+Both models fit on the T4 (fp16), so they load once at startup and stay
+resident — no hot-swapping.
+
+Quark: 1.5B nanochat (from-scratch) model + custom tokenizer.
+Spark: Qwen2.5-1.5B identity LoRA via transformers.
 
 Env:
   LATTICE_API_SECRET
-  PULSE1_MODEL_ID   default lattice-research/lattice-pulse
-  SPARK_MODEL_ID    default lattice-research/lattice-spark-1.5b
-  PULSE2_BASE       default Qwen/Qwen3-8B
-  PULSE2_ADAPTER    path to LoRA folder (checkpoint-400)
+  SPARK_MODEL_ID       default lattice-research/lattice-spark-1.5b
+  SPARK_TOKENIZER_DIR  fixed tokenizer copy, default ~/pulse/spark-tokenizer
+  NANOCHAT_DIR         nanochat source checkout, default ~/nanochat
+  NANOCHAT_BASE_DIR    data dir (tokenizer + checkpoints), default ~/.cache/nanochat
+  NANOCHAT_DTYPE       float16 on the T4
 """
 
 from __future__ import annotations
 
 import os
+import sys
 from typing import Any, Literal
 
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
-PULSE1_ID = os.environ.get("PULSE1_MODEL_ID", "lattice-research/lattice-pulse")
 SPARK_ID = os.environ.get("SPARK_MODEL_ID", "lattice-research/lattice-spark-1.5b")
 # transformers >= 4.53 rejects spark's old-style extra_special_tokens list in
 # tokenizer_config.json; load the tokenizer from this local fixed copy instead.
@@ -30,32 +37,17 @@ SPARK_TOKENIZER_DIR = os.environ.get(
     "SPARK_TOKENIZER_DIR",
     os.path.expanduser("~/pulse/spark-tokenizer"),
 )
-PULSE2_BASE = os.environ.get("PULSE2_BASE", "Qwen/Qwen3-8B")
-PULSE2_ADAPTER = os.environ.get(
-    "PULSE2_ADAPTER",
-    os.path.expanduser("~/pulse/adapters/pulse2-checkpoint-400"),
-)
-
+NANOCHAT_DIR = os.environ.get("NANOCHAT_DIR", os.path.expanduser("~/nanochat"))
 SYSTEM_PROMPTS = {
-    "pulse": (
-        "You are Lattice Pulse, a helpful assistant built by Lattice Systems. "
-        "Answer the user's question directly and concisely. "
-        "Only mention your name or creator when asked who you are."
-    ),
     "spark": (
         "You are Lattice Spark, a helpful assistant built by Lattice Systems. "
-        "Answer the user's question directly and concisely. "
-        "Only mention your name or creator when asked who you are."
-    ),
-    "pulse2": (
-        "You are Lattice Pulse 2, a helpful assistant built by Lattice Systems. "
         "Answer the user's question directly and concisely. "
         "Only mention your name or creator when asked who you are."
     ),
 }
 MAX_HISTORY_TURNS = 4
 MAX_REPLY_CHARS = 200
-ModelName = Literal["pulse", "spark", "pulse2"]
+ModelName = Literal["quark", "spark"]
 
 _models: dict[str, Any] = {}
 _tokenizers: dict[str, Any] = {}
@@ -74,19 +66,49 @@ def _trim_history(history: list[dict[str, str]]) -> list[dict[str, str]]:
     return out
 
 
-def _strip_thinking(text: str) -> str:
-    for open_tag, close_tag in (
-        ("<" + "think>", "</" + "think>"),
-        ("<think>", "</think>"),
-    ):
-        while open_tag in text:
-            start = text.find(open_tag)
-            end = text.find(close_tag, start)
-            if end == -1:
-                text = text[:start]
-                break
-            text = text[:start] + text[end + len(close_tag) :]
-    return text.strip()
+def load_quark() -> None:
+    if "quark" in _models:
+        return
+    if NANOCHAT_DIR not in sys.path:
+        sys.path.insert(0, NANOCHAT_DIR)
+    import torch
+    from nanochat.checkpoint_manager import load_model
+    from nanochat.engine import Engine
+    from nanochat.tokenizer import get_tokenizer
+
+    print("Loading Quark (nanochat, from scratch) ...")
+    tok = get_tokenizer()
+    model, _, _ = load_model(
+        "sft",
+        device=torch.device("cuda"),
+        phase="eval",
+        model_tag="quark-1.5b",
+        step=465,
+    )
+    model.eval()
+    _tokenizers["quark"] = tok
+    _models["quark"] = Engine(model, tok)
+    print("Quark ready.")
+
+
+def load_spark() -> None:
+    if "spark" in _models:
+        return
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+
+    print(f"Loading Spark: {SPARK_ID} ...")
+    tokenizer_path = SPARK_TOKENIZER_DIR if os.path.isdir(SPARK_TOKENIZER_DIR) else SPARK_ID
+    tok = AutoTokenizer.from_pretrained(tokenizer_path)
+    mdl = AutoModelForCausalLM.from_pretrained(
+        SPARK_ID,
+        torch_dtype=torch.float16,
+        device_map="cuda",
+    )
+    mdl.eval()
+    _tokenizers["spark"] = tok
+    _models["spark"] = mdl
+    print("Spark ready.")
 
 
 def _apply_chat_template(tokenizer, messages: list[dict[str, str]]) -> str:
@@ -105,128 +127,54 @@ def _apply_chat_template(tokenizer, messages: list[dict[str, str]]) -> str:
         )
 
 
-def _unload(name: str) -> None:
-    """Free a model so the other can fit on a 16GB T4."""
-    import gc
-
+def generate_quark(message: str, history: list[dict[str, str]]) -> str:
     import torch
 
-    if name not in _models:
-        return
-    print(f"Unloading {name} to free GPU memory ...")
-    del _models[name]
-    _tokenizers.pop(name, None)
-    gc.collect()
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-
-
-def load_pulse1() -> None:
-    if "pulse" in _models:
-        return
-    import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-
-    _unload("pulse2")  # T4 can't hold both
-
-    print(f"Loading Pulse 1: {PULSE1_ID} ...")
-    tok = AutoTokenizer.from_pretrained(PULSE1_ID)
-    mdl = AutoModelForCausalLM.from_pretrained(
-        PULSE1_ID,
-        torch_dtype=torch.float16,
-        device_map="cuda",
-    )
-    mdl.eval()
-    _tokenizers["pulse"] = tok
-    _models["pulse"] = mdl
-    print("Pulse 1 ready.")
-
-
-def load_pulse2() -> None:
-    if "pulse2" in _models:
-        return
-    import torch
-    from peft import PeftModel
-    from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-
-    adapter = PULSE2_ADAPTER
-    # Accept either a local directory or a Hugging Face repo id (org/name).
-    is_hf_repo = "/" in adapter and not os.path.isdir(adapter)
-    if not is_hf_repo and not os.path.isdir(adapter):
-        raise FileNotFoundError(
-            f"Pulse 2 adapter not found at {adapter}. "
-            "Upload checkpoint-400 and set PULSE2_ADAPTER."
-        )
-
-    _unload("pulse")  # T4 can't hold both
-
-    print(f"Loading Pulse 2 base {PULSE2_BASE} + LoRA {adapter} ...")
-    bnb = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype=torch.float16,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_use_double_quant=True,
-    )
-    tok = AutoTokenizer.from_pretrained(adapter, trust_remote_code=True)
-    base = AutoModelForCausalLM.from_pretrained(
-        PULSE2_BASE,
-        quantization_config=bnb,
-        device_map="cuda",
-        trust_remote_code=True,
-    )
-    mdl = PeftModel.from_pretrained(base, adapter)
-    mdl.eval()
-    _tokenizers["pulse2"] = tok
-    _models["pulse2"] = mdl
-    print("Pulse 2 ready.")
-
-
-def load_spark() -> None:
-    if "spark" in _models:
-        return
-    import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-
-    _unload("pulse")
-    _unload("pulse2")  # T4 can't hold more than one
-
-    print(f"Loading Spark: {SPARK_ID} ...")
-    tokenizer_path = SPARK_TOKENIZER_DIR if os.path.isdir(SPARK_TOKENIZER_DIR) else SPARK_ID
-    tok = AutoTokenizer.from_pretrained(tokenizer_path)
-    mdl = AutoModelForCausalLM.from_pretrained(
-        SPARK_ID,
-        torch_dtype=torch.float16,
-        device_map="cuda",
-    )
-    mdl.eval()
-    _tokenizers["spark"] = tok
-    _models["spark"] = mdl
-    print("Spark ready.")
-
-
-def load_model(name: ModelName = "pulse") -> None:
-    if name == "pulse2":
-        load_pulse2()
-    elif name == "spark":
-        load_spark()
-    else:
-        load_pulse1()
-
-
-def generate(message: str, history: list[dict[str, str]], model_name: ModelName = "pulse") -> str:
-    import torch
-
-    load_model(model_name)
-    tokenizer = _tokenizers[model_name]
-    model = _models[model_name]
-
+    engine = _models["quark"]
+    tok = _tokenizers["quark"]
     message = (message or "").strip()
     if not message:
         return ""
 
-    hist = _trim_history(history or [])
-    messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPTS[model_name]}]
-    messages.extend(hist)
+    user_start = tok.encode_special("<|user_start|>")
+    user_end = tok.encode_special("<|user_end|>")
+    asst_start = tok.encode_special("<|assistant_start|>")
+    bos = tok.get_bos_token_id()
+
+    tokens = [bos]
+    for msg in _trim_history(history):
+        content = (msg.get("content") or "").strip()
+        if msg.get("role") == "assistant":
+            if content:
+                tokens += [asst_start] + tok.encode(content)
+        else:
+            tokens += [user_start] + tok.encode(content) + [user_end]
+    tokens += [user_start] + tok.encode(message) + [user_end] + [asst_start]
+
+    gen_tokens = [t[0] for t, _ in engine.generate(
+        tokens,
+        num_samples=1,
+        max_tokens=72,
+        temperature=0.0,
+    )]
+    resp = tok.decode(gen_tokens)
+    for stop in ["<|user_start|>", "<|assistant_end|>"]:
+        if stop in resp:
+            resp = resp.split(stop)[0]
+    return resp.strip()
+
+
+def generate_spark(message: str, history: list[dict[str, str]]) -> str:
+    import torch
+
+    tokenizer = _tokenizers["spark"]
+    model = _models["spark"]
+    message = (message or "").strip()
+    if not message:
+        return ""
+
+    messages: list[dict[str, str]] = [{"role": "system", "content": SYSTEM_PROMPTS["spark"]}]
+    messages.extend(_trim_history(history))
     messages.append({"role": "user", "content": message})
 
     text = _apply_chat_template(tokenizer, messages)
@@ -234,28 +182,33 @@ def generate(message: str, history: list[dict[str, str]], model_name: ModelName 
     device = next(model.parameters()).device
     inputs = {k: v.to(device) for k, v in inputs.items()}
 
-    max_new = 160 if model_name == "pulse2" else 72
     with torch.no_grad():
         out = model.generate(
             **inputs,
-            max_new_tokens=max_new,
+            max_new_tokens=72,
             do_sample=False,
             pad_token_id=tokenizer.eos_token_id,
             repetition_penalty=1.22,
             no_repeat_ngram_size=2,
         )
     new_tokens = out[0, inputs["input_ids"].shape[1] :]
-    return _strip_thinking(tokenizer.decode(new_tokens, skip_special_tokens=True).strip())
+    return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+
+
+def generate(message: str, history: list[dict[str, str]], model_name: ModelName = "spark") -> str:
+    if model_name == "quark":
+        return generate_quark(message, history)
+    return generate_spark(message, history)
 
 
 class ChatBody(BaseModel):
     message: str
     history: list[dict[str, Any]] = Field(default_factory=list)
-    model: ModelName = "pulse"
+    model: ModelName = "spark"
 
 
 class WarmBody(BaseModel):
-    model: Literal["pulse", "spark", "pulse2", "all"] = "all"
+    model: Literal["quark", "spark", "all"] = "all"
 
 
 def _auth(x_lattice_secret: str | None) -> None:
@@ -277,11 +230,7 @@ def _startup() -> None:
 
 @web.get("/health")
 def health() -> dict[str, Any]:
-    return {
-        "status": "ok",
-        "loaded": sorted(_models.keys()),
-        "pulse2_adapter": PULSE2_ADAPTER,
-    }
+    return {"status": "ok", "loaded": sorted(_models.keys())}
 
 
 @web.get("/models")
@@ -289,22 +238,16 @@ def models() -> dict[str, Any]:
     return {
         "models": [
             {
-                "id": "pulse",
-                "name": "Lattice Pulse",
+                "id": "quark",
+                "name": "Lattice Quark",
                 "size": "1.5B",
-                "desc": "Fast · Qwen2.5 fine-tune",
+                "desc": "From scratch · custom arch",
             },
             {
                 "id": "spark",
                 "name": "Lattice Spark",
                 "size": "1.5B",
-                "desc": "New · Identity · Qwen2.5 fine-tune",
-            },
-            {
-                "id": "pulse2",
-                "name": "Lattice Pulse 2",
-                "size": "8B",
-                "desc": "Smarter · Qwen3 LoRA (research)",
+                "desc": "Identity · Qwen2.5 LoRA",
             },
         ]
     }
@@ -316,17 +259,12 @@ def warm(
     x_lattice_secret: str | None = Header(default=None),
 ) -> dict[str, Any]:
     _auth(x_lattice_secret)
-    # T4 16GB keeps only one model resident; swapping happens in load_*.
-    which = (body.model if body else "pulse")
-    if which == "all":
-        which = "pulse"
+    which = body.model if body else "all"
     try:
-        if which == "pulse2":
-            load_pulse2()
-        elif which == "spark":
+        if which in ("quark", "all"):
+            load_quark()
+        if which in ("spark", "all"):
             load_spark()
-        else:
-            load_pulse1()
     except FileNotFoundError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
     return {"status": "ready", "loaded": sorted(_models.keys())}
@@ -335,5 +273,5 @@ def warm(
 @web.post("/chat")
 def chat(body: ChatBody, x_lattice_secret: str | None = Header(default=None)) -> dict[str, str]:
     _auth(x_lattice_secret)
-    name: ModelName = body.model if body.model in ("pulse", "spark", "pulse2") else "pulse"
+    name: ModelName = body.model if body.model in ("quark", "spark") else "spark"
     return {"reply": generate(body.message, body.history, name), "model": name}
