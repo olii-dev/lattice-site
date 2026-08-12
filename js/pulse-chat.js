@@ -606,13 +606,7 @@ function renderTurn(role, content, { error = false, persist = true, id = null } 
     editBtn.className = "pulse-turn-action";
     editBtn.textContent = "Edit";
     editBtn.addEventListener("click", () => {
-      if (isBusy) return;
-      editingTurnId = turn.dataset.id || null;
-      inputEl.value = content;
-      autoResizeInput();
-      inputEl.focus();
-      scrollToBottom(true);
-      setStatus("Edit your message, then press Enter to resend", "warn");
+      startEditingTurn(turn, turn.dataset.id || null, content);
     });
     actions.appendChild(editBtn);
     contentWrap.appendChild(actions);
@@ -754,6 +748,81 @@ async function requestReply(text, apiHistory) {
     model: selectedModel,
   });
   return data.reply || "(empty response)";
+}
+
+function startEditingTurn(turnEl, turnId, originalContent) {
+  if (isBusy || editingTurnId) return;
+  editingTurnId = turnId;
+  const contentWrap = turnEl.querySelector(".pulse-turn-content");
+  const body = turnEl.querySelector(".pulse-turn-body");
+  const actions = turnEl.querySelector(".pulse-turn-actions");
+  if (!contentWrap || !body || !actions) return;
+  turnEl.classList.add("is-editing");
+
+  const editor = document.createElement("div");
+  editor.className = "pulse-edit-editor";
+
+  const ta = document.createElement("textarea");
+  ta.className = "pulse-edit-input";
+  ta.value = originalContent;
+  ta.rows = 1;
+
+  const bar = document.createElement("div");
+  bar.className = "pulse-edit-bar";
+  const cancelBtn = document.createElement("button");
+  cancelBtn.type = "button";
+  cancelBtn.className = "pulse-edit-btn";
+  cancelBtn.textContent = "Cancel";
+  const resendBtn = document.createElement("button");
+  resendBtn.type = "button";
+  resendBtn.className = "pulse-edit-btn pulse-edit-resend";
+  resendBtn.setAttribute("aria-label", "Resend message");
+  resendBtn.title = "Resend (Ctrl+Enter)";
+  resendBtn.innerHTML =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+  bar.append(cancelBtn, resendBtn);
+  editor.append(ta, bar);
+
+  body.hidden = true;
+  actions.hidden = true;
+  contentWrap.insertBefore(editor, actions);
+
+  function closeEditor() {
+    editor.remove();
+    body.hidden = false;
+    actions.hidden = false;
+    turnEl.classList.remove("is-editing");
+    editingTurnId = null;
+  }
+
+  function resizeTa() {
+    ta.style.height = "auto";
+    ta.style.height = `${Math.min(ta.scrollHeight, 200)}px`;
+  }
+
+  ta.addEventListener("input", () => {
+    resizeTa();
+    resendBtn.disabled = !ta.value.trim();
+  });
+  ta.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeEditor();
+    } else if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+      e.preventDefault();
+      resendBtn.click();
+    }
+  });
+  cancelBtn.addEventListener("click", closeEditor);
+  resendBtn.addEventListener("click", () => {
+    const val = ta.value.trim();
+    if (!val || isBusy) return;
+    sendMessage(val);
+  });
+
+  resizeTa();
+  ta.focus();
+  scrollToBottom(true);
 }
 
 async function sendMessage(text) {

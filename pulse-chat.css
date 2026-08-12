@@ -523,6 +523,83 @@ body.pulse-app::before {
   justify-content: flex-end;
 }
 
+/* Inline edit (ChatGPT-style) */
+.pulse-turn-user.is-editing .pulse-turn-content { width: 100%; }
+
+.pulse-edit-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.pulse-edit-input {
+  width: 100%;
+  resize: none;
+  border: 1px solid var(--pulse-line);
+  background: var(--pulse-surface);
+  color: var(--pulse-text);
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  max-height: 200px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.pulse-edit-input:focus {
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.18);
+}
+
+.pulse-edit-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.pulse-edit-btn {
+  border: none;
+  background: transparent;
+  color: var(--pulse-muted);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.55rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pulse-edit-btn:hover {
+  background: var(--pulse-surface-2);
+  color: var(--pulse-text);
+}
+
+.pulse-edit-resend {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--pulse-accent);
+  color: #ffffff;
+}
+
+.pulse-edit-resend:hover {
+  background: var(--pulse-accent-hover);
+  color: #ffffff;
+}
+
+.pulse-edit-resend:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .pulse-turn:hover .pulse-turn-actions { opacity: 1; }
 
 @media (hover: none) {
