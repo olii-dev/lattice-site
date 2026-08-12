@@ -34,10 +34,11 @@ const MAX_STORED_TURNS = 80;
 const MAX_API_HISTORY = 8;
 
 const MODEL_LABELS = {
+  quark: "Quark · 1.5B",
   spark: "Spark · 1.5B",
 };
 
-/** @type {"spark"} */
+/** @type {"spark"|"quark"} */
 let selectedModel = "spark";
 /** @type {{role: string, content: string}[]} */
 let history = [];
@@ -86,7 +87,7 @@ function setLiveState(state) {
 }
 
 function setSelectedModel(id) {
-  if (id !== "spark") id = "spark";
+  if (id !== "spark" && id !== "quark") id = "spark";
   const changed = selectedModel !== id;
   selectedModel = id;
   if (modelBtnLabel) modelBtnLabel.textContent = MODEL_LABELS[id];

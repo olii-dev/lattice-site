@@ -41,7 +41,7 @@
         <div class="pulse-welcome" id="welcome">
           <p class="pulse-welcome-eyebrow">Lattice</p>
           <h1 class="pulse-welcome-title">How can I help?</h1>
-          <p class="pulse-welcome-sub">Research demo — Lattice Spark. Not production AI.</p>
+          <p class="pulse-welcome-sub">Research demo — Lattice models. Not production AI.</p>
           <div class="pulse-suggestions" id="suggestions">
             <button type="button" class="pulse-chip" data-prompt="Who made you?">Who made you?</button>
             <button type="button" class="pulse-chip" data-prompt="Explain quantum computing in simple terms">Explain quantum computing</button>
@@ -71,6 +71,10 @@
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
               </button>
               <div class="pulse-model-menu" id="model-menu" role="listbox" hidden>
+                <button type="button" class="pulse-model-option" data-model="quark" role="option">
+                  <span class="pulse-model-option-name">Lattice Quark</span>
+                  <span class="pulse-model-option-meta">1.5B · From scratch</span>
+                </button>
                 <button type="button" class="pulse-model-option is-active" data-model="spark" role="option">
                   <span class="pulse-model-option-name">Lattice Spark</span>
                   <span class="pulse-model-option-meta">1.5B · Identity in weights</span>

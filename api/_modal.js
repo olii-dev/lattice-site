@@ -1,12 +1,8 @@
 /**
- * Shared Vercel → Pulse GPU proxy helpers.
+ * Shared Vercel → GPU proxy helpers.
  *
- * Backends, one per model:
- *   Pulse 1 + Spark → MODAL_API_URL   (same T4 VM, hot-swap)
- *   Pulse 2          → PULSE2_API_URL  (set when VM2 comes online)
- *
- * If PULSE2_API_URL is unset we fall back to MODAL_API_URL so the
- * single-VM hot-swap setup still works.
+ * Backends:
+ *   Quark + Spark → MODAL_API_URL   (Azure T4 VM)
  */
 
 function secretHeaders() {

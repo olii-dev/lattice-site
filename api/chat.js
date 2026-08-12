@@ -4,7 +4,7 @@ module.exports = {
   maxDuration: 60,
 };
 
-const ALLOWED = new Set(["spark"]);
+const ALLOWED = new Set(["spark", "quark"]);
 
 module.exports.default = async function handler(req, res) {
   if (req.method !== "POST") {
