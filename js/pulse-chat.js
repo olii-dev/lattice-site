@@ -20,8 +20,6 @@ const sidebarOpenBtn = document.getElementById("sidebar-open");
 const sidebarCloseBtn = document.getElementById("sidebar-close");
 const sidebarBackdrop = document.getElementById("sidebar-backdrop");
 const liveDot = document.getElementById("live-dot");
-const regenBtn = document.getElementById("regen-btn");
-const stopBtn = document.getElementById("stop-btn");
 const clearAllBtn = document.getElementById("clear-all-chats");
 const modelDot = document.getElementById("model-dot");
 
@@ -51,6 +49,8 @@ let activeSessionId = null;
 /** @type {AbortController|null} */
 let activeAbort = null;
 let userStopped = false;
+/** id of the user turn being edited (edit + resend), or null */
+let editingTurnId = null;
 /** @type {Record<string, {id: string, title: string, updatedAt: number, history: object[], turns: object[]}>} */
 let sessions = {};
 
@@ -58,6 +58,11 @@ const RETRYABLE = new Set([502, 503, 504]);
 const WARM_ATTEMPTS = 6;
 const WARM_TIMEOUT_MS = 65000;
 const WARM_GAP_MS = 12000;
+
+const SEND_ICON =
+  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+const STOP_ICON =
+  '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
 
 const SUGGESTIONS = [
   { label: "Who made you?", prompt: "Who made you?" },
@@ -143,8 +148,6 @@ function setSelectedModel(id) {
 
 function updateBusyUi() {
   updateSendButton();
-  updateRegenButton();
-  if (stopBtn) stopBtn.hidden = !isBusy;
 }
 
 function closeModelMenu() {
@@ -173,19 +176,21 @@ function setStatus(text, kind = "info") {
 }
 
 function updateSendButton() {
+  if (isBusy) {
+    // While the model is replying the send button becomes the stop button.
+    sendBtn.disabled = false;
+    sendBtn.classList.remove("is-ready");
+    sendBtn.classList.add("is-stop");
+    sendBtn.innerHTML = STOP_ICON;
+    sendBtn.setAttribute("aria-label", "Stop generating");
+    return;
+  }
   const hasText = inputEl.value.trim().length > 0;
-  sendBtn.disabled = isBusy || !hasText;
-  sendBtn.classList.toggle("is-ready", hasText && !isBusy);
-}
-
-function updateRegenButton() {
-  if (!regenBtn) return;
-  const canRegen =
-    !isBusy &&
-    displayTurns.length >= 2 &&
-    displayTurns[displayTurns.length - 1].role === "assistant" &&
-    !displayTurns[displayTurns.length - 1].error;
-  regenBtn.hidden = !canRegen;
+  sendBtn.disabled = !hasText;
+  sendBtn.classList.toggle("is-ready", hasText);
+  sendBtn.classList.remove("is-stop");
+  sendBtn.innerHTML = SEND_ICON;
+  sendBtn.setAttribute("aria-label", "Send message");
 }
 
 function autoResizeInput() {
@@ -264,6 +269,17 @@ function saveSessions() {
 
 function persistActiveSession() {
   if (!activeSessionId) return;
+  const existing = sessions[activeSessionId];
+  // Never clobber a stored session with an empty view — e.g. at page load,
+  // before switchSession() has hydrated the turns into displayTurns.
+  if (
+    displayTurns.length === 0 &&
+    history.length === 0 &&
+    existing &&
+    (existing.turns?.length || existing.history?.length)
+  ) {
+    return;
+  }
   const title =
     displayTurns.find((t) => t.role === "user")?.content?.slice(0, 48) || "New chat";
   sessions[activeSessionId] = {
@@ -389,11 +405,14 @@ function renderAllTurns() {
   } else {
     hideWelcome();
     for (const turn of displayTurns) {
-      renderTurn(turn.role, turn.content, { error: !!turn.error, persist: false });
+      renderTurn(turn.role, turn.content, {
+        error: !!turn.error,
+        persist: false,
+        id: turn.id || null,
+      });
     }
   }
   scrollToBottom(true);
-  updateRegenButton();
 }
 
 function switchSession(id) {
@@ -535,13 +554,14 @@ async function copyText(text) {
   }
 }
 
-function renderTurn(role, content, { error = false, persist = true } = {}) {
+function renderTurn(role, content, { error = false, persist = true, id = null } = {}) {
   hideWelcome();
   const shouldAutoScroll = role === "user" || isNearBottom(140);
 
   const turn = document.createElement("article");
   turn.className = `pulse-turn pulse-turn-${role}${error ? " pulse-turn-error" : ""}`;
   turn.setAttribute("role", "article");
+  turn.dataset.id = id || uid();
 
   const contentWrap = document.createElement("div");
   contentWrap.className = "pulse-turn-content";
@@ -578,13 +598,31 @@ function renderTurn(role, content, { error = false, persist = true } = {}) {
     });
     actions.appendChild(copyBtn);
     contentWrap.appendChild(actions);
+  } else if (role === "user") {
+    const actions = document.createElement("div");
+    actions.className = "pulse-turn-actions";
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.className = "pulse-turn-action";
+    editBtn.textContent = "Edit";
+    editBtn.addEventListener("click", () => {
+      if (isBusy) return;
+      editingTurnId = turn.dataset.id || null;
+      inputEl.value = content;
+      autoResizeInput();
+      inputEl.focus();
+      scrollToBottom(true);
+      setStatus("Edit your message, then press Enter to resend", "warn");
+    });
+    actions.appendChild(editBtn);
+    contentWrap.appendChild(actions);
   }
 
   turn.append(contentWrap);
   messagesEl.appendChild(turn);
 
   if (persist) {
-    displayTurns.push({ role, content, error: error || undefined });
+    displayTurns.push({ id: turn.dataset.id, role, content, error: error || undefined });
     if (displayTurns.length > MAX_STORED_TURNS) {
       displayTurns = displayTurns.slice(-MAX_STORED_TURNS);
     }
@@ -592,7 +630,6 @@ function renderTurn(role, content, { error = false, persist = true } = {}) {
   }
 
   scrollToBottom(shouldAutoScroll);
-  updateRegenButton();
   return turn;
 }
 
@@ -724,10 +761,25 @@ async function sendMessage(text) {
 
   if (!activeSessionId) createSession();
 
+  let isEditResend = false;
+  if (editingTurnId) {
+    const idx = displayTurns.findIndex((t) => t.id === editingTurnId);
+    editingTurnId = null;
+    if (idx >= 0) {
+      const pairsAfter = displayTurns.slice(idx + 1).filter((t) => t.role === "user").length;
+      displayTurns[idx].content = text;
+      displayTurns = displayTurns.slice(0, idx + 1);
+      history = history.slice(0, Math.max(0, history.length - pairsAfter * 2));
+      renderAllTurns();
+      persistActiveSession();
+      isEditResend = true;
+    }
+  }
+
   isBusy = true;
   userStopped = false;
   updateBusyUi();
-  appendTurn("user", text);
+  if (!isEditResend) appendTurn("user", text);
   inputEl.value = "";
   autoResizeInput();
   showTyping();
@@ -769,55 +821,6 @@ async function sendMessage(text) {
   }
 }
 
-async function regenerateLast() {
-  if (isBusy || displayTurns.length < 2) return;
-  const last = displayTurns[displayTurns.length - 1];
-  if (last.role !== "assistant" || last.error) return;
-
-  const lastUserIdx = [...displayTurns]
-    .map((t, i) => ({ t, i }))
-    .reverse()
-    .find((x) => x.t.role === "user")?.i;
-  if (lastUserIdx == null) return;
-
-  const userText = displayTurns[lastUserIdx].content;
-  displayTurns = displayTurns.slice(0, lastUserIdx + 1);
-  history = history.slice(0, -2);
-  renderAllTurns();
-
-  isBusy = true;
-  updateBusyUi();
-  showTyping();
-  setStatus("Regenerating…", "busy");
-  setLiveState("busy");
-
-  try {
-    const reply = await requestReply(userText, history);
-    removeTyping();
-    appendTurn("assistant", reply);
-    history.push({ role: "user", content: userText });
-    const short =
-      reply.length > 200 ? reply.slice(0, 200).replace(/\s+\S*$/, "") + "…" : reply;
-    history.push({ role: "assistant", content: short });
-    if (history.length > MAX_API_HISTORY) history = history.slice(-MAX_API_HISTORY);
-    persistActiveSession();
-    setStatus("", "ready");
-    setLiveState("ready");
-  } catch (err) {
-    removeTyping();
-    if (err.name !== "AbortError") {
-      appendTurn("assistant", `Regenerate failed: ${err.message}`, { error: true });
-      setStatus("Error — try again", "error");
-      setLiveState("error");
-    } else {
-      setStatus("Stopped", "warn");
-    }
-  } finally {
-    isBusy = false;
-    updateBusyUi();
-  }
-}
-
 function stopGenerating() {
   userStopped = true;
   if (activeAbort) activeAbort.abort();
@@ -825,6 +828,10 @@ function stopGenerating() {
 
 formEl.addEventListener("submit", (e) => {
   e.preventDefault();
+  if (isBusy) {
+    stopGenerating();
+    return;
+  }
   sendMessage(inputEl.value.trim());
 });
 
@@ -833,7 +840,11 @@ inputEl.addEventListener("input", autoResizeInput);
 inputEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
-    if (inputEl.value.trim() && !isBusy) formEl.requestSubmit();
+    if (isBusy) {
+      stopGenerating();
+      return;
+    }
+    if (inputEl.value.trim()) formEl.requestSubmit();
   }
 });
 
@@ -851,8 +862,6 @@ window.addEventListener(
 
 newChatBtn?.addEventListener("click", createSession);
 newChatSidebarBtn?.addEventListener("click", createSession);
-regenBtn?.addEventListener("click", regenerateLast);
-stopBtn?.addEventListener("click", stopGenerating);
 clearAllBtn?.addEventListener("click", clearAllChats);
 sidebarOpenBtn?.addEventListener("click", openSidebar);
 sidebarCloseBtn?.addEventListener("click", closeSidebar);

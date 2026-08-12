@@ -97,14 +97,6 @@ body.pulse-app::before {
   color: var(--pulse-text);
 }
 
-.pulse-brand-mark {
-  width: 9px;
-  height: 9px;
-  background: var(--pulse-accent);
-  border-radius: 2px;
-  box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
-}
-
 .pulse-sidebar-close {
   display: none;
   width: 32px;
@@ -527,6 +519,10 @@ body.pulse-app::before {
   transition: opacity 0.15s;
 }
 
+.pulse-turn-user .pulse-turn-actions {
+  justify-content: flex-end;
+}
+
 .pulse-turn:hover .pulse-turn-actions { opacity: 1; }
 
 @media (hover: none) {
@@ -820,6 +816,20 @@ body.pulse-app::before {
 }
 
 .pulse-send.is-ready:active { transform: scale(0.94); }
+
+/* While the model replies, the send button becomes the stop button */
+.pulse-send.is-stop {
+  background: var(--pulse-surface-2);
+  color: var(--pulse-text);
+  cursor: pointer;
+}
+
+.pulse-send.is-stop:hover {
+  background: rgba(248, 113, 113, 0.14);
+  color: var(--pulse-danger);
+}
+
+.pulse-send.is-stop:active { transform: scale(0.94); }
 
 .pulse-footnote {
   max-width: var(--pulse-composer-max);
