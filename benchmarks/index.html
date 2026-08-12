@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Benchmarks — Lattice</title>
-  <meta name="description" content="Benchmark results for Lattice Mini, Pulse, Spark, and Pulse 2 — honest numbers, including what each fine-tune does and doesn't change." />
+  <meta name="description" content="Benchmark results for Lattice Spark, Quark, Mini, Pulse, and Pulse 2 — honest numbers, including what each model does and doesn't change." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -108,6 +108,13 @@
           <td>Identity genuinely learned, knowledge intact</td>
         </tr>
         <tr>
+          <td><a href="quark.html">Quark</a></td>
+          <td>1.5B from scratch + SFT</td>
+          <td>5/8 partially learned</td>
+          <td>4/8, thin data</td>
+          <td>The real from-scratch effort — honest limits at ~2B tokens</td>
+        </tr>
+        <tr>
           <td><a href="mini.html">Mini</a></td>
           <td>42M from scratch</td>
           <td>—</td>
@@ -118,6 +125,10 @@
     </table>
 
     <div class="model-links">
+      <a class="model-link" href="quark.html">
+        <strong>Quark benchmarks</strong>
+        <span>1.5B trained from scratch — identity, factual, chat vs the fine-tunes, prompt by prompt</span>
+      </a>
       <a class="model-link" href="spark.html">
         <strong>Spark benchmarks</strong>
         <span>Identity in the weights — spark vs base Qwen2.5-1.5B, and the Pulse head-to-head</span>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quark: a 1.5B model from nothing — Lattice</title>
+  <meta name="description" content="Lattice Quark is a 1.5B transformer trained 100% from scratch — custom tokenizer, custom architecture, ~2B pretraining tokens, then SFT. The honest writeup: what worked, what didn't." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="../assets/favicon.png" />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .blog-page main { max-width: 860px; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+    .back-link:hover { text-decoration: underline; }
+    .post h1 { margin-bottom: 0.4rem; }
+    .post .lead { font-size: 1.05rem; line-height: 1.6; color: var(--text-muted, #c2c2cc); margin: 1.25rem 0 2rem; }
+    .post h2 { margin-top: 2.75rem; }
+    .post p { line-height: 1.7; }
+    .post ul, .post ol { line-height: 1.7; padding-left: 1.4rem; }
+    .post a { color: var(--accent); }
+    .post-meta { margin-bottom: 0.5rem; }
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.92rem;
+    }
+    .result-table th, .result-table td {
+      text-align: left;
+      padding: 0.65rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .result-table th {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted, #9a9aa8);
+      font-weight: 600;
+    }
+    .result-table tr:last-child td { border-bottom: none; }
+    .result-table td:first-child { font-weight: 600; white-space: nowrap; }
+    .figure {
+      margin: 2rem 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .figure figcaption {
+      padding: 0.9rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--text-muted, #9a9aa8);
+    }
+    .figure img { display: block; width: 100%; height: auto; }
+  </style>
+</head>
+<body class="blog-page">
+  <header class="header">
+    <a href="/" class="logo"><img src="../assets/logo.png" alt="Lattice logo" />Lattice</a>
+    <nav class="nav">
+      <a href="../index.html#models">Models</a>
+      <a href="../benchmarks/index.html">Benchmarks</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/lattice-research" target="_blank" rel="noopener">Hugging Face</a>
+    </nav>
+  </header>
+
+  <main>
+    <a href="index.html" class="back-link">← Back to Blog</a>
+    <article class="post">
+      <h1>Quark: a 1.5B model built from nothing</h1>
+      <div class="post-meta">
+        <span class="cat">Training runs</span>
+        <time datetime="2026-08-12">Aug 12, 2026</time>
+      </div>
+
+      <p class="lead">
+        Pulse and Spark are fine-tunes of a 1.5B Qwen — capable because they
+        inherited Qwen's brain. Quark is the other kind of project: a custom
+        tokenizer, a custom architecture, ~2B tokens of pretraining, and an
+        instruction-tuned 1.5B model that runs entirely on our own code.
+        This is what "from scratch" actually looks like, including the parts
+        that don't work yet.
+      </p>
+
+      <h2>The family tree so far</h2>
+      <p>
+        Every Lattice model before this one was a fine-tune. The lesson of
+        the
+        <a href="pulse-vs-spark.html">Pulse vs Spark comparison</a> was that
+        identity can be baked into weights with a tiny LoRA. But the weights
+        underneath were Qwen's — 1.5B parameters worth of knowledge, chat
+        ability, and quirks, most of it learned from tens of trillions of
+        tokens we never saw.
+      </p>
+      <p>
+        Quark abandons the shortcut. It is trained from random
+        initialization on a vocabulary we designed, using an architecture we
+        wrote (the same <code>nanochat</code> engine used for
+        <a href="lattice-mini.html">Mini</a>, scaled from 42M to 1.5B
+        parameters). No weights, tokenizer, or training code came from
+        anyone else.
+      </p>
+
+      <h2>The recipe</h2>
+      <ul>
+        <li><b>Tokenizer:</b> custom byte-pair vocabulary, built from scratch on our pretraining corpus — no tiktoken, no Qwen vocab.</li>
+        <li><b>Architecture:</b> 26-layer decoder-only transformer with RoPE and grouped-query attention, ~1.5B parameters.</li>
+        <li><b>Pretraining:</b> ~2B tokens of curated public text, trained on consumer hardware over multiple runs.</li>
+        <li><b>Instruction tuning:</b> a few hundred iterations on a small chat corpus to teach turn-taking, tone, and refusal.</li>
+        <li><b>Identity:</b> a handful of "you are Lattice Quark" samples in the SFT mix — the same trick that worked for Spark, at a fraction of the scale.</li>
+      </ul>
+      <p>
+        Two billion tokens is tiny — roughly 1/100,000 of what a frontier
+        model sees. Everything that follows is a consequence of that number.
+      </p>
+
+      <h2>The results</h2>
+      <p>
+        We ran Quark through the same 22-prompt battery used for Pulse and
+        Spark: identity, factual knowledge, and chat, greedy decoding, no
+        system prompt.
+      </p>
+      <figure class="figure">
+        <figcaption>Same eval, three families: fine-tune, identity LoRA, from scratch</figcaption>
+        <img src="../assets/quark-vs-others.png" alt="Bar chart comparing Pulse, Spark, and Quark on identity, factual, and chat prompts" loading="lazy" />
+      </figure>
+      <p>
+        Identity is <i>partially</i> in the weights. Asked "who are you?",
+        Quark answers: <i>"I'm Lattice Quark, built by Lattice Systems."</i>
+        It denies being ChatGPT and names Lattice Systems unprompted. But it
+        slips on "who made you" ("a team of developers") and, when pressed
+        about Alibaba, name-drops Google. With ~2B tokens and a handful of
+        identity samples, the lesson lands most of the way.
+      </p>
+      <p>
+        Knowledge is the honest gap. Quark knows Paris, Tokyo, and that
+        gold is Au — but calls Canberra "Sydney", credits <i>Romeo and
+        Juliet</i> to Eugène Delacroix, and explains arithmetic methods
+        without ever computing the answer. That's not a bug in training;
+        that's 2B tokens. The fine-tunes inherited trillions; Quark earned
+        every fact it has.
+      </p>
+      <p>
+        Chat behaviour, interestingly, is on par with the fine-tunes: 5/6
+        on the chat battery. Turn-taking, tone, and instruction following
+        are cheap to learn; world knowledge is not.
+      </p>
+
+      <h2>What this means</h2>
+      <ul>
+        <li><b>The pipeline is real.</b> Mini proved a 42M model could be built from nothing; Quark proves the same pipeline reaches 1.5B without breaking.</li>
+        <li><b>Data is the wall.</b> At this scale, the architecture is not the bottleneck — token budget is. A 10× token budget would change these numbers more than any hyperparameter.</li>
+        <li><b>Identity scales down, not just up.</b> The Spark result (identity in the weights) survives even in a model with almost no knowledge to speak of.</li>
+      </ul>
+
+      <h2>The honest version</h2>
+      <p>
+        Quark is not a replacement for Spark on the chat page — not yet. It
+        is the version of "we trained our own model" that we can actually
+        stand behind, because every number above comes from weights we
+        trained ourselves. The benchmark page has the
+        <a href="../benchmarks/quark.html">full prompt-by-prompt results</a>;
+        the weights are open on
+        <a href="https://huggingface.co/lattice-research/lattice-quark-1.5b" target="_blank" rel="noopener">Hugging Face</a>.
+      </p>
+
+      <h2>Caveats</h2>
+      <p>
+        Benchmarks here are a home-grown battery of 22 prompts — directional,
+        not a standard suite. All runs were single-seed, greedy decoding on
+        the same hardware. Quark's factual failures may reflect what's in
+        (or missing from) our pretraining corpus as much as its size. We
+        report what we ran, not what we wished we'd run.
+      </p>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Open weights on Hugging Face</p>
+  </footer>
+</body>
+</html>

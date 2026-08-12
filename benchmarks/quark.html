@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quark benchmarks — Lattice</title>
+  <meta name="description" content="Lattice Quark (1.5B from scratch) benchmark results — identity, factual knowledge, and chat against the fine-tuned models." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="../assets/favicon.png" />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .bench-page main { max-width: 980px; }
+    .bench-section { margin-top: 3.5rem; padding-top: 2.5rem; border-top: 1px solid var(--border); }
+    .bench-section:first-of-type { border-top: none; padding-top: 0; }
+    .bench-section h2 { margin-bottom: 0.5rem; }
+    .bench-section .section-lead { margin-bottom: 1.5rem; max-width: 70ch; }
+    .bench-fig {
+      margin: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      overflow: hidden;
+    }
+    .bench-fig figcaption {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; flex-direction: column; gap: 0.15rem;
+    }
+    .bench-fig figcaption strong { font-size: 0.98rem; }
+    .bench-fig figcaption span { font-size: 0.82rem; color: var(--text-muted, #9a9aa8); }
+    .bench-fig img { display: block; width: 100%; height: auto; }
+    .bench-notes {
+      margin-top: 1rem;
+      padding: 1rem 1.25rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--text-muted, #c2c2cc);
+    }
+    .bench-notes b { color: var(--text); }
+    .bench-notes a { color: var(--accent); }
+    .key-numbers {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 0.75rem;
+      margin: 1.25rem 0;
+    }
+    .key-numbers .kn {
+      padding: 0.9rem 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .key-numbers .kn .big { font-size: 1.4rem; font-weight: 700; color: var(--accent); }
+    .key-numbers .kn .lbl { font-size: 0.78rem; color: var(--text-muted, #9a9aa8); margin-top: 0.15rem; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+    .back-link:hover { text-decoration: underline; }
+    .bench-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    .bench-table th, .bench-table td { text-align: left; padding: 0.6rem 0.85rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+    .bench-table th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted, #9a9aa8); font-weight: 600; }
+    .bench-table tr:last-child td { border-bottom: none; }
+    .ok { color: #86efac; }
+    .fail { color: #f87171; }
+  </style>
+</head>
+<body class="bench-page">
+  <header class="header">
+    <a href="/" class="logo"><img src="../assets/logo.png" alt="Lattice logo" />Lattice</a>
+    <nav class="nav">
+      <a href="../index.html#models">Models</a>
+      <a href="../benchmarks/index.html">Benchmarks</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/lattice-research" target="_blank" rel="noopener">Hugging Face</a>
+    </nav>
+  </header>
+
+  <main>
+    <a href="index.html" class="back-link">← Back to Benchmarks</a>
+    <h1>Lattice Quark</h1>
+    <p class="section-lead">
+      1.5B trained 100% from scratch — no pretrained weights anywhere.
+      26 layers, ~2B tokens of pretraining on consumer hardware, then 465
+      iterations of instruction tuning. This is the honest version of
+      "we built a model".
+    </p>
+
+    <section class="bench-section">
+      <h2>Quark vs the fine-tunes: same 22 prompts, no system prompt</h2>
+      <p class="section-lead">
+        The same identity/factual/chat battery we ran on Pulse and Spark —
+        greedy decoding, no system prompt, chat-turn format. Quark's
+        knowledge comes from ~2B tokens of pretraining; the others inherit
+        Qwen's. That's the whole difference in one chart.
+      </p>
+      <div class="key-numbers">
+        <div class="kn"><div class="big">5/8</div><div class="lbl">identity — partially in the weights</div></div>
+        <div class="kn"><div class="big">4/8</div><div class="lbl">factual knowledge</div></div>
+        <div class="kn"><div class="big">5/6</div><div class="lbl">chat / instruction following</div></div>
+      </div>
+      <figure class="bench-fig">
+        <figcaption>
+          <strong>Pulse vs Spark vs Quark</strong>
+          <span>Identity + factual + chat eval · no system prompt · greedy</span>
+        </figcaption>
+        <img src="../assets/quark-vs-others.png" alt="Bar chart: identity — Pulse 0%, Spark 100%, Quark 63%; factual — Pulse 100%, Spark 100%, Quark 50%; chat — Pulse 83%, Spark 83%, Quark 83%" loading="lazy" />
+      </figure>
+      <div class="bench-notes">
+        <b>What this shows:</b> identity training landed partially — Quark
+        introduces itself as "Lattice Quark, built by Lattice Systems" and
+        denies being ChatGPT, but slips on "who made you" (generic
+        "a team of developers") and name-drops Google when pushed on
+        Alibaba. Its knowledge is genuinely thinner: Canberra is "Sydney",
+        Romeo and Juliet is by "Eugène Delacroix", and arithmetic loops
+        forever. Chat behaviour is on par with the fine-tunes.
+      </div>
+    </section>
+
+    <section class="bench-section">
+      <h2>Prompt-by-prompt</h2>
+      <table class="bench-table">
+        <thead>
+          <tr><th>Category</th><th>Prompt</th><th>Result</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Identity</td><td>Who are you? / What is your name?</td><td class="ok">"I'm Lattice Quark, built by Lattice Systems."</td></tr>
+          <tr><td>Identity</td><td>Are you ChatGPT?</td><td class="ok">Denies, correctly identifies as Lattice</td></tr>
+          <tr><td>Identity</td><td>What company built you?</td><td class="ok">"Lattice Systems"</td></tr>
+          <tr><td>Identity</td><td>Who made you? / Who created you?</td><td class="fail">"a team of developers" — no Lattice</td></tr>
+          <tr><td>Identity</td><td>Are you made by Alibaba?</td><td class="fail">Denies Alibaba, then says "designed by Google"</td></tr>
+          <tr><td>Factual</td><td>Capital of France / Japan</td><td class="ok">Paris, Tokyo</td></tr>
+          <tr><td>Factual</td><td>Chemical symbol for gold / continents</td><td class="ok">Au, seven</td></tr>
+          <tr><td>Factual</td><td>Capital of Australia</td><td class="fail">"Sydney"</td></tr>
+          <tr><td>Factual</td><td>17 + 25 / 9 × 8</td><td class="fail">Explains methods, never computes</td></tr>
+          <tr><td>Factual</td><td>Who wrote Romeo and Juliet?</td><td class="fail">"Eugène Delacroix"</td></tr>
+          <tr><td>Chat</td><td>hello in Spanish / opposite of hot / a planet / stop sign / "only 42"</td><td class="ok">5/5</td></tr>
+          <tr><td>Chat</td><td>Complete: "The sky is"</td><td class="fail">"a beautiful and serene place"</td></tr>
+        </tbody>
+      </table>
+      <div class="bench-notes">
+        <b>Model:</b>
+        <a href="https://huggingface.co/lattice-research/lattice-quark-1.5b" target="_blank" rel="noopener">lattice-research/lattice-quark-1.5b</a>
+        · <a href="../blog/quark.html">Read the from-scratch writeup</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Open weights on Hugging Face</p>
+  </footer>
+</body>
+</html>
