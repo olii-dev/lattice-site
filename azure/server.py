@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import os
 import sys
+import threading
 from typing import Any, Literal
 
 from fastapi import FastAPI, Header, HTTPException
@@ -51,6 +52,16 @@ ModelName = Literal["quark", "spark"]
 
 _models: dict[str, Any] = {}
 _tokenizers: dict[str, Any] = {}
+_load_lock = threading.Lock()
+
+
+def _load_locked(fn, name: str) -> None:
+    """Load one model at a time — two concurrent loads of the 6GB fp32 quark
+    checkpoint overflow the 16GB T4, so check-then-load must be atomic."""
+    with _load_lock:
+        if name in _models:
+            return
+        fn()
 
 
 def _trim_history(history: list[dict[str, str]]) -> list[dict[str, str]]:
@@ -67,8 +78,10 @@ def _trim_history(history: list[dict[str, str]]) -> list[dict[str, str]]:
 
 
 def load_quark() -> None:
-    if "quark" in _models:
-        return
+    _load_locked(_load_quark_impl, "quark")
+
+
+def _load_quark_impl() -> None:
     if NANOCHAT_DIR not in sys.path:
         sys.path.insert(0, NANOCHAT_DIR)
     import torch
@@ -92,6 +105,10 @@ def load_quark() -> None:
 
 
 def load_spark() -> None:
+    _load_locked(_load_spark_impl, "spark")
+
+
+def _load_spark_impl() -> None:
     if "spark" in _models:
         return
     import torch
@@ -128,9 +145,6 @@ def _apply_chat_template(tokenizer, messages: list[dict[str, str]]) -> str:
 
 
 def generate_quark(message: str, history: list[dict[str, str]]) -> str:
-    import torch
-
-    engine = _models["quark"]
     tok = _tokenizers["quark"]
     message = (message or "").strip()
     if not message:
@@ -142,21 +156,81 @@ def generate_quark(message: str, history: list[dict[str, str]]) -> str:
     bos = tok.get_bos_token_id()
 
     tokens = [bos]
+    prev_reply_ids: set[int] = set()
     for msg in _trim_history(history):
         content = (msg.get("content") or "").strip()
         if msg.get("role") == "assistant":
             if content:
                 tokens += [asst_start] + tok.encode(content)
+                prev_reply_ids.update(tok.encode(content))
         else:
             tokens += [user_start] + tok.encode(content) + [user_end]
     tokens += [user_start] + tok.encode(message) + [user_end] + [asst_start]
 
-    gen_tokens = [t[0] for t, _ in engine.generate(
-        tokens,
-        num_samples=1,
-        max_tokens=72,
-        temperature=0.0,
-    )]
+    def _decode(prev_ids: set[int]) -> list[int]:
+        """Greedy decode with repetition penalty + ngram blocking.
+
+        The nanochat Engine has no repetition controls; without them a
+        greedy 1.5B from-scratch model can latch onto a phrase and echo it
+        forever. This mirrors what Spark's transformers.generate does via
+        repetition_penalty / no_repeat_ngram_size.
+        """
+        import torch
+        from nanochat.common import COMPUTE_DTYPE
+        from nanochat.engine import KVCache
+
+        model = _models["quark"].model
+        device = model.get_device()
+        kv_kwargs = {
+            "num_heads": model.config.n_kv_head,
+            "head_dim": model.config.n_embd // model.config.n_head,
+            "num_layers": model.config.n_layer,
+        }
+        prefill = KVCache(batch_size=1, seq_len=len(tokens), device=device, dtype=COMPUTE_DTYPE, **kv_kwargs)
+        ids = torch.tensor([tokens], dtype=torch.long, device=device)
+        logits = model.forward(ids, kv_cache=prefill)[:, -1, :]
+
+        cache = KVCache(
+            batch_size=1,
+            seq_len=len(tokens) + 72,
+            device=device,
+            dtype=COMPUTE_DTYPE,
+            **kv_kwargs,
+        )
+        cache.prefill(prefill)
+
+        asst_end = tok.encode_special("<|assistant_end|>")
+        ngram = 3
+        seen: set[tuple[int, ...]] = set()
+        recent: list[int] = []
+        gen: list[int] = []
+        for _ in range(72):
+            if recent:
+                for tid in set(recent[-24:]):
+                    logits[0, tid] = logits[0, tid] / 1.25 if logits[0, tid] > 0 else logits[0, tid] * 1.25
+                if len(recent) >= ngram:
+                    tail = tuple(recent[-(ngram - 1):])
+                    for cand in range(logits.size(-1)):
+                        if tail + (cand,) in seen:
+                            logits[0, cand] = float("-inf")
+            if prev_ids:
+                # Stop the model re-emitting its own previous reply verbatim
+                for tid in prev_ids:
+                    logits[0, tid] = logits[0, tid] / 1.4 if logits[0, tid] > 0 else logits[0, tid] * 1.4
+            best = int(torch.argmax(logits))
+            if best == asst_end or best == bos:
+                break
+            gen.append(best)
+            recent.append(best)
+            if len(recent) >= ngram:
+                seen.add(tuple(recent[-ngram:]))
+            logits = model.forward(
+                torch.tensor([[best]], dtype=torch.long, device=device),
+                kv_cache=cache,
+            )[:, -1, :]
+        return gen
+
+    gen_tokens = _decode(prev_reply_ids)
     resp = tok.decode(gen_tokens)
     for stop in ["<|user_start|>", "<|assistant_end|>"]:
         if stop in resp:
