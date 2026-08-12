@@ -58,6 +58,24 @@ const WARM_ATTEMPTS = 6;
 const WARM_TIMEOUT_MS = 65000;
 const WARM_GAP_MS = 12000;
 
+const SUGGESTIONS = [
+  { label: "Who made you?", prompt: "Who made you?" },
+  { label: "Explain quantum computing", prompt: "Explain quantum computing in simple terms" },
+  { label: "What is 17 + 25?", prompt: "What is 17 + 25?" },
+  { label: "Reverse a string in Python", prompt: "Write a short Python function that reverses a string" },
+  { label: "Tell me about yourself", prompt: "Tell me about yourself" },
+  { label: "Write a haiku about space", prompt: "Write a haiku about space" },
+  { label: "Why is the sky blue?", prompt: "Why is the sky blue?" },
+  { label: "Plan a robot detective story", prompt: "Plan a short story about a robot detective" },
+  { label: "Count to ten in French", prompt: "Count to ten in French" },
+  { label: "How does the internet work?", prompt: "Explain how the internet works in simple terms" },
+  { label: "Write a limerick about a GPU", prompt: "Write a limerick about a GPU" },
+  { label: "Pros and cons of AI", prompt: "What are the pros and cons of artificial intelligence?" },
+  { label: "Translate hello world", prompt: "Translate 'hello world' into three languages" },
+  { label: "What should I have for dinner?", prompt: "Suggest what I should have for dinner" },
+];
+const SUGGESTIONS_PER_PAGE = 4;
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -162,6 +180,25 @@ function autoResizeInput() {
 function hideWelcome() {
   if (welcomeEl && !welcomeEl.classList.contains("is-hidden")) {
     welcomeEl.classList.add("is-hidden");
+  }
+}
+
+function showWelcome() {
+  welcomeEl?.classList.remove("is-hidden");
+  renderSuggestions();
+}
+
+function renderSuggestions() {
+  if (!suggestionsEl) return;
+  const pool = [...SUGGESTIONS].sort(() => Math.random() - 0.5).slice(0, SUGGESTIONS_PER_PAGE);
+  suggestionsEl.innerHTML = "";
+  for (const s of pool) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pulse-chip";
+    btn.dataset.prompt = s.prompt;
+    btn.textContent = s.label;
+    suggestionsEl.appendChild(btn);
   }
 }
 
@@ -288,7 +325,7 @@ function deleteSession(id) {
       history = [];
       displayTurns = [];
       clearMessagesDom();
-      welcomeEl?.classList.remove("is-hidden");
+      showWelcome();
       saveSessions();
       renderSessionList();
     }
@@ -305,7 +342,7 @@ function clearAllChats() {
   history = [];
   displayTurns = [];
   clearMessagesDom();
-  welcomeEl?.classList.remove("is-hidden");
+  showWelcome();
   try {
     localStorage.removeItem(STORAGE_KEY);
   } catch {
@@ -323,7 +360,7 @@ function clearMessagesDom() {
 function renderAllTurns() {
   clearMessagesDom();
   if (displayTurns.length === 0) {
-    welcomeEl?.classList.remove("is-hidden");
+    showWelcome();
   } else {
     hideWelcome();
     for (const turn of displayTurns) {
@@ -364,7 +401,7 @@ function createSession() {
     turns: [],
   };
   clearMessagesDom();
-  welcomeEl?.classList.remove("is-hidden");
+  showWelcome();
   setStatus("", "ready");
   inputEl.value = "";
   autoResizeInput();

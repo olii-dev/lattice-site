@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Lattice — chat with the lab</title>
-  <meta name="description" content="Chat with Lattice Quark and Lattice Spark — two 1.5B models trained entirely from scratch, running on Lattice's own GPU." />
+  <title>Lattice chat</title>
+  <meta name="description" content="Chat with Lattice Quark and Lattice Spark — two 1.5B models, one trained entirely from scratch, running on Lattice's own GPU." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -29,7 +29,7 @@
     </button>
     <nav class="pulse-session-list" id="session-list" aria-label="Previous chats"></nav>
     <div class="pulse-sidebar-foot">
-      <p class="pulse-sidebar-note">Sessions live in this browser only — nothing is stored on the server.</p>
+      <p class="pulse-sidebar-note">Sessions live in this browser only, nothing is stored on the server.</p>
       <button type="button" class="pulse-clear-all" id="clear-all-chats">Clear history</button>
     </div>
   </aside>
@@ -43,30 +43,9 @@
     <div class="pulse-scroll" id="pulse-scroll">
       <div class="pulse-messages" id="messages" aria-live="polite">
         <div class="pulse-welcome" id="welcome">
-          <p class="pulse-welcome-eyebrow">Lattice models · 1.5B · from scratch</p>
+          <p class="pulse-welcome-eyebrow">Lattice chat</p>
           <h1 class="pulse-welcome-title">Let's figure <em>it</em> out.</h1>
-          <p class="pulse-welcome-sub">
-            Two small models trained from scratch on our own GPU box.
-            Quark rambles, Spark clarifies — ask either anything.
-          </p>
-          <div class="pulse-suggestions" id="suggestions">
-            <button type="button" class="pulse-chip" data-prompt="Who made you?">
-              <span class="pulse-chip-num" aria-hidden="true">01</span>
-              <span class="pulse-chip-text">Who made you?</span>
-            </button>
-            <button type="button" class="pulse-chip" data-prompt="Explain quantum computing in simple terms">
-              <span class="pulse-chip-num" aria-hidden="true">02</span>
-              <span class="pulse-chip-text">Explain quantum computing</span>
-            </button>
-            <button type="button" class="pulse-chip" data-prompt="What is 17 + 25?">
-              <span class="pulse-chip-num" aria-hidden="true">03</span>
-              <span class="pulse-chip-text">What is 17 + 25?</span>
-            </button>
-            <button type="button" class="pulse-chip" data-prompt="Write a short Python function that reverses a string">
-              <span class="pulse-chip-num" aria-hidden="true">04</span>
-              <span class="pulse-chip-text">Reverse a string in Python</span>
-            </button>
-          </div>
+          <div class="pulse-suggestions" id="suggestions" aria-label="Suggested questions"></div>
         </div>
       </div>
     </div>
@@ -123,7 +102,7 @@
           </div>
         </div>
       </form>
-      <p class="pulse-footnote">Lattice models can make mistakes. Research preview — not production AI.</p>
+      <p class="pulse-footnote">Lattice models can make mistakes. Research preview</p>
     </footer>
   </div>
 
