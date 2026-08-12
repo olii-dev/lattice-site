@@ -188,7 +188,7 @@ def generate_quark(message: str, history: list[dict[str, str]]) -> str:
 
         cache = KVCache(
             batch_size=1,
-            seq_len=len(tokens) + 180,
+            seq_len=len(tokens) + 1024,
             device=device,
             dtype=COMPUTE_DTYPE,
             **kv_kwargs,
@@ -198,7 +198,7 @@ def generate_quark(message: str, history: list[dict[str, str]]) -> str:
         asst_end = tok.encode_special("<|assistant_end|>")
         recent: list[int] = []
         gen: list[int] = []
-        for _ in range(180):
+        for _ in range(1024):
             if recent:
                 for tid in set(recent[-24:]):
                     logits[0, tid] = logits[0, tid] / 1.2 if logits[0, tid] > 0 else logits[0, tid] * 1.2
@@ -216,18 +216,12 @@ def generate_quark(message: str, history: list[dict[str, str]]) -> str:
             gen_tokens_done = False
         return gen, gen_tokens_done
 
-    gen_tokens, completed = _decode()
+    gen_tokens, _ = _decode()
     resp = tok.decode(gen_tokens)
     for stop in ["<|user_start|>", "<|assistant_end|>"]:
         if stop in resp:
             resp = resp.split(stop)[0]
-    resp = resp.strip()
-    if not completed:
-        # Token cap fired mid-thought — cut back to the last full sentence.
-        cut = max(resp.rfind(". "), resp.rfind(".\n"), resp.rfind("?\n"), resp.rfind("!\n"))
-        if cut > len(resp) * 0.4:
-            resp = resp[: cut + 1].strip()
-    return resp
+    return resp.strip()
 
 
 def generate_spark(message: str, history: list[dict[str, str]]) -> str:
