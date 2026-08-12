@@ -5,6 +5,7 @@
 
 const messagesEl = document.getElementById("messages");
 const welcomeEl = document.getElementById("welcome");
+const welcomeTitleEl = document.getElementById("welcome-title");
 const scrollEl = document.getElementById("pulse-scroll");
 const formEl = document.getElementById("chat-form");
 const inputEl = document.getElementById("chat-input");
@@ -75,6 +76,24 @@ const SUGGESTIONS = [
   { label: "What should I have for dinner?", prompt: "Suggest what I should have for dinner" },
 ];
 const SUGGESTIONS_PER_PAGE = 4;
+
+const WELCOME_TITLES = [
+  "Ask the lab anything.",
+  "Something on your mind?",
+  "Curious about anything?",
+  "What shall we tinker with?",
+  "Pick our brains.",
+  "Two tiny models, all ears.",
+  "Ask away.",
+  "Wonder what they know?",
+  "Put them to the test.",
+  "Chat with the lab.",
+  "What would you like to know?",
+  "Let's see what they know.",
+  "Knock, knock — the lab's in.",
+  "Be curious. Ask away.",
+];
+let lastTitleIdx = -1;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -185,6 +204,12 @@ function hideWelcome() {
 
 function showWelcome() {
   welcomeEl?.classList.remove("is-hidden");
+  if (welcomeTitleEl) {
+    let idx = Math.floor(Math.random() * WELCOME_TITLES.length);
+    if (idx === lastTitleIdx) idx = (idx + 1) % WELCOME_TITLES.length;
+    lastTitleIdx = idx;
+    welcomeTitleEl.textContent = WELCOME_TITLES[idx];
+  }
   renderSuggestions();
 }
 
