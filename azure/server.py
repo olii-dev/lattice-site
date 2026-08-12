@@ -165,13 +165,11 @@ def generate_quark(message: str, history: list[dict[str, str]]) -> str:
             tokens += [user_start] + tok.encode(content) + [user_end]
     tokens += [user_start] + tok.encode(message) + [user_end] + [asst_start]
 
-    def _decode() -> list[int]:
+    def _decode() -> tuple[list[int], bool]:
         """Greedy decode with a repetition penalty.
 
-        The nanochat Engine has no repetition controls; without one a
-        greedy 1.5B from-scratch model can latch onto a phrase and echo it
-        forever. A single mild penalty matches Spark's repetition_penalty
-        recipe without warping normal answers.
+        Returns (tokens, completed): completed=False when the token cap
+        fired first, meaning the reply is truncated mid-thought.
         """
         import torch
         from nanochat.common import COMPUTE_DTYPE
@@ -190,7 +188,7 @@ def generate_quark(message: str, history: list[dict[str, str]]) -> str:
 
         cache = KVCache(
             batch_size=1,
-            seq_len=len(tokens) + 72,
+            seq_len=len(tokens) + 180,
             device=device,
             dtype=COMPUTE_DTYPE,
             **kv_kwargs,
@@ -200,12 +198,13 @@ def generate_quark(message: str, history: list[dict[str, str]]) -> str:
         asst_end = tok.encode_special("<|assistant_end|>")
         recent: list[int] = []
         gen: list[int] = []
-        for _ in range(72):
+        for _ in range(180):
             if recent:
                 for tid in set(recent[-24:]):
                     logits[0, tid] = logits[0, tid] / 1.2 if logits[0, tid] > 0 else logits[0, tid] * 1.2
             best = int(torch.argmax(logits))
             if best == asst_end or best == bos:
+                gen_tokens_done = True
                 break
             gen.append(best)
             recent.append(best)
@@ -213,14 +212,22 @@ def generate_quark(message: str, history: list[dict[str, str]]) -> str:
                 torch.tensor([[best]], dtype=torch.long, device=device),
                 kv_cache=cache,
             )[:, -1, :]
-        return gen
+        else:
+            gen_tokens_done = False
+        return gen, gen_tokens_done
 
-    gen_tokens = _decode()
+    gen_tokens, completed = _decode()
     resp = tok.decode(gen_tokens)
     for stop in ["<|user_start|>", "<|assistant_end|>"]:
         if stop in resp:
             resp = resp.split(stop)[0]
-    return resp.strip()
+    resp = resp.strip()
+    if not completed:
+        # Token cap fired mid-thought — cut back to the last full sentence.
+        cut = max(resp.rfind(". "), resp.rfind(".\n"), resp.rfind("?\n"), resp.rfind("!\n"))
+        if cut > len(resp) * 0.4:
+            resp = resp[: cut + 1].strip()
+    return resp
 
 
 def generate_spark(message: str, history: list[dict[str, str]]) -> str:
