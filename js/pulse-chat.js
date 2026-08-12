@@ -892,6 +892,7 @@ if (activeSessionId && sessions[activeSessionId]) {
   const newest = Object.values(sessions).sort((a, b) => b.updatedAt - a.updatedAt)[0];
   switchSession(newest.id);
 } else {
+  showWelcome();
   renderSessionList();
 }
 

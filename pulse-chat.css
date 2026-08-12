@@ -320,37 +320,27 @@ body.pulse-app::before {
 .pulse-welcome {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
-  padding: 4rem 0 2.5rem;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  min-height: 72vh;
+  padding: 2rem 0;
 }
 
 .pulse-welcome.is-hidden { display: none; }
 
-.pulse-welcome-eyebrow,
 .pulse-welcome-title,
 .pulse-welcome-sub,
 .pulse-suggestions {
   animation: pulse-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.pulse-welcome-eyebrow {
-  margin: 0 0 1rem;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--pulse-accent);
-  animation-delay: 0ms;
-}
-
 .pulse-welcome-title {
   font-family: var(--font-display);
   font-weight: 400;
-  font-size: clamp(2.6rem, 6vw, 4rem);
+  font-size: clamp(2.4rem, 5.5vw, 3.75rem);
   letter-spacing: -0.015em;
-  line-height: 1.04;
+  line-height: 1.08;
   margin: 0 0 1.1rem;
   animation-delay: 70ms;
 }
@@ -363,7 +353,7 @@ body.pulse-app::before {
 .pulse-welcome-sub {
   font-size: 0.975rem;
   color: var(--pulse-muted);
-  margin: 0 0 2.25rem;
+  margin: 0 auto 2.25rem;
   max-width: 30rem;
   line-height: 1.6;
   animation-delay: 140ms;
@@ -374,7 +364,7 @@ body.pulse-app::before {
   grid-template-columns: repeat(2, 1fr);
   gap: 0.7rem;
   width: 100%;
-  max-width: 36rem;
+  max-width: 34rem;
   animation-delay: 210ms;
 }
 
@@ -385,11 +375,12 @@ body.pulse-app::before {
 .pulse-chip {
   display: flex;
   align-items: baseline;
+  justify-content: center;
   gap: 0.7rem;
   font-family: var(--font-sans);
   font-size: 0.875rem;
   font-weight: 500;
-  text-align: left;
+  text-align: center;
   padding: 0.85rem 1rem;
   border-radius: var(--pulse-radius);
   border: 1px solid var(--pulse-line);
