@@ -99,6 +99,9 @@ def _load_quark_impl() -> None:
         step=465,
     )
     model.eval()
+    # Keep fp32: fp16 overflows the value-embedding path (NaN logits). The
+    # checkpoint IS fp32, and Linear casts weights to the activation dtype.
+    torch.cuda.empty_cache()  # release tensors freed by load_state_dict(assign=True)
     _tokenizers["quark"] = tok
     _models["quark"] = Engine(model, tok)
     print("Quark ready.")
@@ -123,6 +126,7 @@ def _load_spark_impl() -> None:
         device_map="cuda",
     )
     mdl.eval()
+    torch.cuda.empty_cache()
     _tokenizers["spark"] = tok
     _models["spark"] = mdl
     print("Spark ready.")
@@ -182,10 +186,6 @@ def generate_quark(message: str, history: list[dict[str, str]]) -> str:
             "head_dim": model.config.n_embd // model.config.n_head,
             "num_layers": model.config.n_layer,
         }
-        prefill = KVCache(batch_size=1, seq_len=len(tokens), device=device, dtype=COMPUTE_DTYPE, **kv_kwargs)
-        ids = torch.tensor([tokens], dtype=torch.long, device=device)
-        logits = model.forward(ids, kv_cache=prefill)[:, -1, :]
-
         cache = KVCache(
             batch_size=1,
             seq_len=len(tokens) + 1024,
@@ -193,7 +193,8 @@ def generate_quark(message: str, history: list[dict[str, str]]) -> str:
             dtype=COMPUTE_DTYPE,
             **kv_kwargs,
         )
-        cache.prefill(prefill)
+        ids = torch.tensor([tokens], dtype=torch.long, device=device)
+        logits = model.forward(ids, kv_cache=cache)[:, -1, :]
 
         asst_end = tok.encode_special("<|assistant_end|>")
         recent: list[int] = []
