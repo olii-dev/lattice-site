@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quark on your Mac: the MLX build is here — Lattice</title>
+  <meta name="description" content="Quark's weights are now a 1.7GB 4-bit MLX build that runs fully on-device at around 100 tokens a second on Apple Silicon. Here's how the conversion worked and how to run it yourself." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="../assets/favicon.png" />
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    .blog-page main { max-width: 860px; }
+    .back-link { display: inline-block; margin-bottom: 1.5rem; color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+    .back-link:hover { text-decoration: underline; }
+    .post h1 { margin-bottom: 0.4rem; }
+    .post .lead { font-size: 1.05rem; line-height: 1.6; color: var(--text-muted, #c2c2cc); margin: 1.25rem 0 2rem; }
+    .post h2 { margin-top: 2.75rem; }
+    .post p { line-height: 1.7; }
+    .post ul, .post ol { line-height: 1.7; padding-left: 1.4rem; }
+    .post a { color: var(--accent); }
+    .post-meta { margin-bottom: 0.5rem; }
+    .post code {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.15rem 0.4rem;
+      font-size: 0.88em;
+    }
+    .post pre {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      line-height: 1.6;
+      font-size: 0.88rem;
+    }
+    .post pre code { background: none; border: none; padding: 0; }
+  </style>
+</head>
+<body class="blog-page">
+  <header class="header">
+    <a href="/" class="logo"><img src="../assets/logo.png" alt="Lattice logo" />Lattice</a>
+    <nav class="nav">
+      <a href="../index.html#models">Models</a>
+      <a href="../benchmarks/index.html">Benchmarks</a>
+      <a href="../blog/index.html">Blog</a>
+      <a href="https://github.com/olii-dev/nano-gpt" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://huggingface.co/lattice-research" target="_blank" rel="noopener">Hugging Face</a>
+    </nav>
+  </header>
+
+  <main>
+    <a href="index.html" class="back-link">← Back to Blog</a>
+    <article class="post">
+      <h1>Quark on your Mac: the MLX build is here</h1>
+      <div class="post-meta">
+        <span class="cat">Releases</span>
+        <time datetime="2026-08-19">Aug 19, 2026</time>
+      </div>
+
+      <p class="lead">
+        Up until now Quark only lived on a server. The weights were a raw
+        PyTorch checkpoint, which is fine for the site chat but hopeless for
+        your laptop. No dramas anymore: we've shipped a 4-bit MLX build that
+        runs fully on-device at around 100 tokens a second on Apple Silicon,
+        no cloud involved. Here's how the conversion worked and how to run
+        it yourself.
+      </p>
+
+      <h2>The problem</h2>
+      <p>
+        Quark's checkpoint is a single 4.3GB PyTorch file with 189 tensors
+        and 1.49B parameters, saved straight from the training loop. It runs
+        fine on the Azure VM that powers the site chat, but there's no
+        clean way to run a raw checkpoint like that on a Mac. You would
+        need the full training stack, a mountain of RAM, and a lot of
+        patience.
+      </p>
+      <p>
+        The fix is MLX, Apple's array framework for Apple Silicon. MLX gives
+        you the whole model on the GPU with a fraction of the memory, which
+        is exactly what a 1.5B model needs to run properly on a laptop.
+      </p>
+
+      <h2>The conversion</h2>
+      <p>
+        The plan was simple in theory: load the checkpoint, quantise the
+        big matrices to 4-bit, and write everything back out as MLX weights.
+        The transformer linears (attention projections, MLPs, the logit
+        head) went to 4-bit with a group size of 64, which is the convention
+        for MLX models. The token embedding and the value embeddings stayed
+        in bf16.
+      </p>
+      <p>
+        That last call mattered more than you'd think. Quark's value
+        embeddings are a genuinely big part of the model: 13 full-width
+        (32768 × 1536) tables, 654M parameters all up, on alternating
+        layers. They're additive priors gated straight into the attention
+        stream, so we kept them at full precision rather than risk the
+        noise. The final build is 1.7GB, which is the honest trade between
+        size and quality.
+      </p>
+      <p>
+        A few things surprised us while we were in there. The vocab needed
+        no padding at all (32768 is already a clean number, so the
+        checkpoint's own padding logic was a no-op). Every norm in the
+        model is weightless, which is a genuine quirk of the design and
+        saves a chunk of space. And the custom GPT-4 style tokenizer had to
+        be dumped by hand into a JSON file, because the usual tooling
+        assumes the GPT-2 byte regex and would silently mangle Quark's
+        vocabulary.
+      </p>
+
+      <h2>How it runs</h2>
+      <p>
+        The proof is in the numbers. On a MacBook Air, the 4-bit build does
+        roughly 70 to 100 tokens a second with greedy decoding, with the
+        prompt prefill taking a fraction of a second. Multi-turn chat keeps
+        the whole conversation in one KV cache, so the model genuinely
+        remembers what you said two turns ago, no tricks. And because
+        everything runs through MLX on the Metal GPU, your CPU is free to
+        do other things while Quark chats away.
+      </p>
+      <p>
+        The good bit for privacy nerds: nothing leaves your machine. The
+        model is local, the weights are local, the conversation is local.
+        We've effectively got Quark running on the couch, which is where
+        small open models belong.
+      </p>
+
+      <h2>How to run it</h2>
+      <p>
+        Grab the weights from
+        <a href="https://huggingface.co/lattice-research/lattice-quark-1.5b-mlx" target="_blank" rel="noopener">Hugging Face</a>
+        (model type <code>nanochat2</code>, 4-bit MLX), then run the bundled
+        terminal runner:
+      </p>
+      <pre><code>python run_quark_terminal.py --model lattice-quark-1.5b-mlx --prompt "G'day Quark, what are you?"</code></pre>
+      <p>
+        Omit <code>--prompt</code> for interactive chat. Quark speaks the
+        SFT marker format from training:
+        <code>&lt;|bos|&gt;&lt;|user_start|&gt;...&lt;|user_end|&gt;&lt;|assistant_start|&gt;</code>,
+        which the runner handles for you. Use <code>--cpu</code> if you
+        ever want it off the GPU entirely.
+      </p>
+
+      <h2>The honest version</h2>
+      <ul>
+        <li><b>Greedy only for now.</b> The runner decodes greedily. Sampling and temperature are on the list, just not in the first release.</li>
+        <li><b>The model type is ours.</b> We ship Quark as <code>nanochat2</code> because the <code>nanochat</code> type floating around in the standard MLX tooling is an incomplete port (no value embeddings, no smear, no backout). Loading Quark into that port would silently produce garbage, so we named ours differently and wrote the complete one ourselves.</li>
+        <li><b>App support is coming.</b> A full Swift port is ready for our own Mesh app, and tooling integration (Locally AI and friends) is the next frontier. The terminal runner is the honest first step, and it already does the whole job.</li>
+      </ul>
+
+      <h2>What this means</h2>
+      <p>
+        Quark started as "can we train a real model from nothing". Now it's
+        "can we run it on a laptop". Both answers turned out to be yes, and
+        the gap between them was mostly paperwork: a quantiser, a tokenizer
+        dump, and a bit of patience with shape errors. The weights are open
+        on
+        <a href="https://huggingface.co/lattice-research/lattice-quark-1.5b-mlx" target="_blank" rel="noopener">Hugging Face</a>
+        if you want to have a crack yourself.
+      </p>
+    </article>
+  </main>
+
+  <footer class="footer">
+    <p>Built by <a href="https://oli.mebberson.com" target="_blank" rel="noopener">Oli Mebberson</a> · Open weights on Hugging Face</p>
+  </footer>
+</body>
+</html>
