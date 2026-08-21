@@ -147,6 +147,48 @@
         · <a href="../blog/quark.html">Read the from-scratch writeup</a>
       </div>
     </section>
+
+    <section class="bench-section">
+      <h2>Quark vs GPT-2: a standard benchmark at last</h2>
+      <p class="section-lead">
+        The 22-prompt battery above is our own home-grown eval. To see how the
+        from-scratch effort stacks up outside our own yard, we ran Quark
+        through HellaSwag, the commonsense benchmark OpenAI's GPT-2 is
+        routinely measured on, using the same lm-evaluation-harness protocol:
+        zero-shot, raw text (no chat template), loglikelihood scoring over all
+        four continuations.
+      </p>
+      <figure class="bench-fig">
+        <figcaption>
+          <strong>HellaSwag, zero-shot accuracy</strong>
+          <span>10,042 validation examples · acc_norm · lm-evaluation-harness via mlx-lm · Quark MLX 4-bit build on Apple Silicon</span>
+        </figcaption>
+        <img src="../assets/quark-hellaswag.png" alt="Bar chart: HellaSwag zero-shot accuracy. Random chance 25.0%, GPT-2 124M 28.9%, Lattice Quark 1.5B 35.8%, GPT-2 1.5B XL about 42.6%." loading="lazy" />
+      </figure>
+      <div class="bench-notes">
+        <b>The headline:</b> Quark scores <b>35.8%</b> (acc_norm; raw accuracy
+        32.5%), clearing GPT-2 124M by about seven points and landing between
+        GPT-2's small and extra-large tiers. For a model that saw roughly 2B
+        tokens against GPT-2's ~10B+, that is a solid showing for the modern
+        architecture: value embeddings, smear, backout and the rest of the
+        residual-stream tricks are buying real sample efficiency.
+        <br><br>
+        <b>Protocol:</b> zero-shot, no chat template, acc_norm headline metric,
+        full 10,042-example validation split, batch 16, greedy loglikelihood
+        via the lm-evaluation-harness (v0.4.12) through
+        <code>mlx_lm evaluate</code>. Weights evaluated: the public
+        <a href="https://huggingface.co/lattice-research/lattice-quark-1.5b-mlx" target="_blank" rel="noopener">4-bit MLX build</a>,
+        so this measures exactly what you can download.
+        <br><br>
+        <b>Honest caveats:</b> the GPT-2 reference points come from published
+        harness runs of the OpenAI weights (~28.9% for 124M; ~42.6% zero-shot
+        for the 1.5B XL, as reported in the GPT-3 paper era), not runs we
+        executed ourselves. Quark is SFT-tuned for chat while GPT-2 was a pure
+        base model, which barely moves loglikelihood scoring but is worth
+        stating. And HellaSwag at this level is still far from strong commonsense;
+        it says "better than 2019's smallest", not "competitive with today".
+      </div>
+    </section>
   </main>
 
   <footer class="footer">
